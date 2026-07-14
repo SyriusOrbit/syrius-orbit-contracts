@@ -11,3 +11,6 @@ Thumbs.db
 *.tmp
 *.swp
 *~
+
+# Node.js dependencies
+node_modules/
