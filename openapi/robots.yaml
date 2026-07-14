@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: Robot Management API
+  version: 1.0.0
+  description: Robot fleet management and monitoring for SyriusOrbit
+paths:
+  /robots:
+    get:
+      summary: List robots
+      operationId: listRobots
+      responses:
+        '200':
+          description: List of robots

@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: OGC API - Coverage
+  version: 1.0.0
+  description: OGC API Coverage for raster data (point clouds, DEM) in SyriusOrbit
+paths:
+  /collections/{collectionId}/coverage:
+    get:
+      summary: Get coverage data
+      operationId: getCoverage
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Coverage data

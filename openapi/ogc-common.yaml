@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: OGC API - Common
+  version: 1.0.0
+  description: OGC API Common endpoints for SyriusOrbit platform
+paths:
+  /conformance:
+    get:
+      summary: Get conformance classes
+      operationId: getConformance
+      responses:
+        '200':
+          description: Conformance classes implemented by this API

@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: OGC API - Routes
+  version: 1.0.0
+  description: OGC API Routes for path planning in SyriusOrbit
+paths:
+  /routes:
+    post:
+      summary: Compute route
+      operationId: computeRoute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Computed route

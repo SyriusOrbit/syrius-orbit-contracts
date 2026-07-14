@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: OGC API - Features
+  version: 1.0.0
+  description: OGC API Features for spatial vector data in SyriusOrbit
+paths:
+  /collections:
+    get:
+      summary: Get feature collections
+      operationId: getCollections
+      responses:
+        '200':
+          description: List of feature collections

@@ -1,0 +1,14 @@
+asyncapi: 3.0.0
+info:
+  title: MRIS MQTT Interface
+  version: 1.0.0
+  description: MRIS (Mobile Robot Interoperability Standard) interface for SyriusOrbit
+channels:
+  telemetry:
+    address: 'mris/robot/{robotId}/telemetry'
+    messages:
+      telemetryMessage:
+        name: Telemetry
+        title: MRIS Telemetry Message
+        summary: Robot telemetry data
+        contentType: application/json

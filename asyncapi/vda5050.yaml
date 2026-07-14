@@ -1,0 +1,22 @@
+asyncapi: 3.0.0
+info:
+  title: VDA5050 MQTT Interface
+  version: 2.0.0
+  description: VDA5050 standard interface for AGV communication in SyriusOrbit
+channels:
+  order:
+    address: 'uagv/v2/{manufacturer}/{serialNumber}/order'
+    messages:
+      orderMessage:
+        name: Order
+        title: VDA5050 Order Message
+        summary: Order message sent to AGV
+        contentType: application/json
+  state:
+    address: 'uagv/v2/{manufacturer}/{serialNumber}/state'
+    messages:
+      stateMessage:
+        name: State
+        title: VDA5050 State Message
+        summary: State message from AGV
+        contentType: application/json

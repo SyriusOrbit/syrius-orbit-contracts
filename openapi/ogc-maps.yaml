@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: OGC API - Maps
+  version: 1.0.0
+  description: OGC API Maps for map tile services in SyriusOrbit
+paths:
+  /collections/{collectionId}/map:
+    get:
+      summary: Get map representation
+      operationId: getMap
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map representation
