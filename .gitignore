@@ -1,0 +1,13 @@
+# Editor and IDE state
+.vs/
+.vscode/
+.idea/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Temporary and backup files
+*.tmp
+*.swp
+*~
