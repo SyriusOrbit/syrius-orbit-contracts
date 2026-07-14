@@ -14,6 +14,7 @@ info:
 servers:
   - description: SyriusOrbit API server
     url: https://api.syriusorbit.com
+security: []
 paths:
   /:
     $ref: './ogc-common.yaml#/paths/~1'
@@ -63,6 +64,8 @@ paths:
           explode: false
         - $ref: '#/components/parameters/f-metadata'
       responses:
+        '400':
+          $ref: '#/components/responses/InvalidParameter'
         '200':
           $ref: '#/components/responses/CollectionsList'
   /collections/{collectionId}:
@@ -77,6 +80,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Collection'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /map:
     get:
       tags:
@@ -154,15 +159,6 @@ paths:
           $ref: '#/components/responses/ServerError'
 components:
   schemas:
-    confClasses:
-      type: object
-      required:
-        - conformsTo
-      properties:
-        conformsTo:
-          type: array
-          items:
-            type: string
     link:
       type: object
       required:
@@ -198,27 +194,6 @@ components:
           example: Trierer Strasse 70, 53115 Bonn
         length:
           type: integer
-    landingPage:
-      type: object
-      required:
-        - links
-      properties:
-        title:
-          type: string
-          title: The title of the API.
-          description: While a title is not required, implementors are strongly advised to include one.
-          example: Buildings in Bonn
-        description:
-          type: string
-          example: Access to data about buildings in the city of Bonn via a Web API that conforms to the OGC API Common specification.
-        attribution:
-          type: string
-          title: attribution for the API
-          description: The `attribution` should be short and intended for presentation to a user, for example, in a corner of a map. Parts of the text can be links to other resources if additional information is needed. The string can include HTML markup.
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/link'
     exception:
       title: Exception Schema
       description: JSON schema for exceptions based on RFC 7807
@@ -526,6 +501,13 @@ components:
                 to access the first item in each array.
               type: array
               minItems: 1
+              example:
+                -
+                  - '2011-11-11T12:22:11Z'
+                  - '2011-11-11T16:22:11Z'
+                -
+                  - '2012-01-01T00:00:00Z'
+                  - null
               items:
                 description: |-
                   Begin and end times of the time interval. The timestamps are in the
@@ -541,10 +523,6 @@ components:
                   type: string
                   format: date-time
                   nullable: true
-                example:
-                  - '2011-11-11T12:22:11Z'
-                  - '2011-11-11T08:22:11-04:00'
-                  - null
             trs:
               description: |-
                 Coordinate reference system of the coordinates in the temporal extent
@@ -570,9 +548,9 @@ components:
                     type: string
                     nullable: true
                   example:
-                    - - 2020-11-12T12:15Z
-                      - 2020-11-12T12:30Z
-                      - 2020-11-12T12:45Z
+                    - 2020-11-12T12:15Z
+                    - 2020-11-12T12:30Z
+                    - 2020-11-12T12:45Z
                 cellsCount:
                   description: |-
                     Number of samples available along the temporal dimension for data organized as a regular grid.
@@ -595,6 +573,9 @@ components:
       allOf:
         - $ref: '#/components/schemas/extent'
         - type: object
+          properties:
+            spatial: {}
+            temporal: {}
           additionalProperties:
             description: The domain intervals for any additional dimensions of the extent (envelope) beyond those described in temporal and spatial.
             type: object
@@ -619,6 +600,13 @@ components:
                   to access the first item (a pair of lower and upper bound values).
                 type: array
                 minItems: 1
+                example:
+                  -
+                    - '2011-11-11T12:22:11Z'
+                    - '2011-11-11T16:22:11Z'
+                  -
+                    - '2012-01-01T00:00:00Z'
+                    - null
                 items:
                   description: |-
                     Lower and upper bound values of the interval. The values
@@ -631,11 +619,6 @@ components:
                       - type: string
                         nullable: true
                       - type: number
-                  example:
-                    - '2011-11-11T12:22:11Z'
-                    - '2011-11-11T08:22:11-04:00'
-                    - 32.5
-                    - null
               trs:
                 type: string
                 description: temporal coordinate reference system (e.g. as defined by Features for 'temporal')
@@ -675,9 +658,7 @@ components:
                       - type: string
                         nullable: true
                       - type: number
-                    example:
-                      - PT1H
-                      - 0.0006866455078
+                    example: PT1H
               definition:
                 type: string
                 format: uri
@@ -1004,96 +985,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exception'
-        text/html:
-          schema:
-            type: string
-    Exception:
-      description: An error occurred.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/exception'
-        text/html:
-          schema:
-            type: string
-    LandingPage:
-      description: |-
-        The landing page provides links to the API definition (link relation `service-desc`, in this case path `/api`),
-        to the Conformance declaration (path `/conformance`, link relation `conformance`), and to the Collections of geospatial data (path `/collections`, link relation `data`).
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/landingPage'
-          example:
-            title: Buildings in Bonn
-            description: Access to data about buildings in the city of Bonn via a Web API that conforms to the OGC API - Maps specification.
-            links:
-              - href: http://data.example.org/
-                rel: self
-                type: application/json
-                title: this document
-              - href: http://data.example.org/api
-                rel: service-desc
-                type: application/vnd.oai.openapi+json;version=3.0
-                title: the API definition
-              - href: http://data.example.org/api.html
-                rel: service-doc
-                type: text/html
-                title: the API documentation
-              - href: http://data.example.org/conformance
-                rel: http://www.opengis.net/def/rel/ogc/1.0/conformance
-                type: application/json
-                title: OGC API conformance classes implemented by this service
-              - href: http://data.example.org/collections
-                rel: http://www.opengis.net/def/rel/ogc/1.0/data
-                type: application/json
-                title: Information about the collections
-        text/html:
-          schema:
-            type: string
-    Conformance:
-      description: The URIs of all conformance classes supported by the server
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/confClasses'
-            example:
-              conformsTo:
-                - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core
-                - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/landing-page
-                - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/json
-                - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/html
-                - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/oas30
-                - http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/core
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/tilesets
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/background
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/collections-selection
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/scaling
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/display-resolution
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/spatial-subsetting
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/datetime
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/general-subsetting
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/crs
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/orientation
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/projection
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/collection-map
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/dataset-map
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/styled-map
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/png
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/jpeg
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/jpegxl
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/tiff
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/svg
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/html
-                - https://www.opengis.net/spec/ogcapi-maps-1/1.0/conf/api-operations
-    API:
-      description: The OpenAPI definition of the API.
-      content:
-        application/vnd.oai.openapi+json;version=3.0:
-          schema:
-            type: object
         text/html:
           schema:
             type: string
