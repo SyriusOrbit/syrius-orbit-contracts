@@ -16,9 +16,9 @@ window.onload = function() {
       { url: "../../ogc_official_examples/OGC-ogcapi-processes-1-example-1-1.0.0-unresolved.yaml", name: "ogc-example-processes-1-1.0.0-unresolved" },
       { url: "../../ogc_official_examples/OGC-ogcapi-maps-1-example-1-1.0.0-unresolved.yaml", name: "ogc-example-maps-1-1.0.0-unresolved" },
       { url: "../../ogc_official_examples/OGC-ogcapi-features-1-example-1-1.0.1-unresolved.yaml", name: "ogc-example-features-1-1.0.1-unresolved" },
-      { url: "../../ogc_official_examples/ogcapi-features-2.yaml", name: "ogc-example-features-2" }
+      { url: "../../ogc_official_examples/ogcapi-features-2.yaml", name: "ogc-example-features-2" },
       { url: "../../ogc_official_examples/OGC-ogcapi-features-3-example-1-1.0.0-unresolved.yaml", name: "ogc-example-features-3-1.0.0-unresolved" },
-      { url: "../../ogc_official_examples/OGC-ogcapi-movingfeatures-1-example-1-1.0.0-unresolved.yaml", name: "ogc-example-movingfeatures-1-1.0.0-unresolved" },
+      { url: "../../ogc_official_examples/OGC-ogcapi-movingfeatures-1-example-1-1.0.0-unresolved.yaml", name: "ogc-example-movingfeatures-1-1.0.0-unresolved" }
     ],
     dom_id: '#swagger-ui',
     deepLinking: true,

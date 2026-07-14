@@ -22,7 +22,7 @@ paths:
         The landing page provides links to the API definition and the
         conformance statements for this API.
       parameters:
-        - $ref: '#/components/parameters/f'
+        - $ref: '#/components/parameters/f-metadata'
       operationId: getLandingPage
       responses:
         '200':
@@ -40,7 +40,7 @@ paths:
     get:
       description: This document
       parameters:
-        - $ref: '#/components/parameters/f'
+        - $ref: '#/components/parameters/f-metadata'
       operationId: getApiDefinition
       responses:
         '200':
@@ -60,7 +60,7 @@ paths:
         A list of all conformance classes specified in a standard that the
         server conforms to.
       parameters:
-        - $ref: '#/components/parameters/f'
+        - $ref: '#/components/parameters/f-metadata'
       operationId: getConformanceDeclaration
       responses:
         '200':
@@ -76,7 +76,7 @@ paths:
         - server
 components:
   parameters:
-    f:
+    f-metadata:
       description: >-
         The optional f parameter indicates the output format that the server
         shall provide as part of the response document.  The default format is
