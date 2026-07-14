@@ -12,7 +12,6 @@ window.onload = function() {
       { url: "../../openapi/ogc-routes.yaml", name: "ogc-routes" },
       { url: "../../openapi/ogc-schemas.yaml", name: "ogc-schemas" },
       { url: "../../openapi/robots.yaml", name: "robots" },
-      { url: "../../openapi/tenants.yaml", name: "tenants" },
       { url: "../../ogc_official_examples/OGC-ogcapi-common-1-example-1-1.0.0-unresolved.yaml", name: "ogc-example-common-1-1.0.0-unresolved" },
       { url: "../../ogc_official_examples/OGC-ogcapi-features-1-example-1-1.0.1-unresolved.yaml", name: "ogc-example-features-1-1.0.1-unresolved" },
       { url: "../../ogc_official_examples/OGC-ogcapi-features-3-example-1-1.0.0-unresolved.yaml", name: "ogc-example-features-3-1.0.0-unresolved" },
