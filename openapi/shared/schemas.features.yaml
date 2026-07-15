@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Feature Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    feature:
+      type: object
+      required:
+        - type
+        - geometry
+        - properties
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+              format: int64
+        geometry:
+          type: object
+          nullable: true
+          additionalProperties: true
+        properties:
+          type: object
+          nullable: true
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'
+    featureCollection:
+      type: object
+      required:
+        - type
+        - features
+      properties:
+        type:
+          type: string
+          enum:
+            - FeatureCollection
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/feature'
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'
+        numberMatched:
+          type: integer
+          format: int64
+          minimum: 0
+        numberReturned:
+          type: integer
+          format: int64
+          minimum: 0
+        timeStamp:
+          type: string
+          format: date-time

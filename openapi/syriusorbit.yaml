@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Spatial API
+  version: 1.0.0
+  description: |-
+    Contract-first OpenAPI profile for SyriusOrbit spatial services.
+    The API supports multi-site discovery, site-scoped collections,
+    feature queries with CQL2, map retrieval, point cloud retrieval,
+    route planning, and TSP solving.
+  contact:
+    name: SyriusOrbit Maintainers
+    url: https://github.com/SyriusOrbit/syrius-orbit-contracts
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: /
+security: []
+tags:
+  - name: Server
+    description: API discovery and conformance endpoints.
+  - name: Sites
+    description: Site discovery and metadata.
+  - name: Collections
+    description: Site collections and collection metadata.
+  - name: Features
+    description: Feature query endpoints for cell and connection collections.
+  - name: Maps
+    description: Grid map retrieval endpoints.
+  - name: Coverages
+    description: Point cloud coverage endpoints.
+  - name: Routes
+    description: Route planning endpoints.
+  - name: TSP
+    description: Traveling salesman solving endpoints.
+paths:
+  /:
+    $ref: './modules/common.paths.yaml#/paths/~1'
+  /api:
+    $ref: './modules/common.paths.yaml#/paths/~1api'
+  /conformance:
+    $ref: './modules/common.paths.yaml#/paths/~1conformance'
+  /sites:
+    $ref: './modules/common.paths.yaml#/paths/~1sites'
+  /sites/{siteId}:
+    $ref: './modules/sites.paths.yaml#/paths/~1sites~1{siteId}'
+  /sites/{siteId}/collections:
+    $ref: './modules/collections.paths.yaml#/paths/~1sites~1{siteId}~1collections'
+  /sites/{siteId}/collections/{collectionId}:
+    $ref: './modules/collections.paths.yaml#/paths/~1sites~1{siteId}~1collections~1{collectionId}'
+  /sites/{siteId}/collections/{collectionId}/items:
+    $ref: './modules/features.paths.yaml#/paths/~1sites~1{siteId}~1collections~1{collectionId}~1items'
+  /sites/{siteId}/collections/{collectionId}/items/{featureId}:
+    $ref: './modules/features.paths.yaml#/paths/~1sites~1{siteId}~1collections~1{collectionId}~1items~1{featureId}'
+  /sites/{siteId}/collections/gridmap/map:
+    $ref: './modules/maps.paths.yaml#/paths/~1sites~1{siteId}~1collections~1gridmap~1map'
+  /sites/{siteId}/collections/gridmap/map/origin:
+    $ref: './modules/maps.paths.yaml#/paths/~1sites~1{siteId}~1collections~1gridmap~1map~1origin'
+  /sites/{siteId}/collections/gridmap/map/mask:
+    $ref: './modules/maps.paths.yaml#/paths/~1sites~1{siteId}~1collections~1gridmap~1map~1mask'
+  /sites/{siteId}/collections/gridmap/map/merged:
+    $ref: './modules/maps.paths.yaml#/paths/~1sites~1{siteId}~1collections~1gridmap~1map~1merged'
+  /sites/{siteId}/collections/pointcloud/coverage:
+    $ref: './modules/coverages.paths.yaml#/paths/~1sites~1{siteId}~1collections~1pointcloud~1coverage'
+  /sites/{siteId}/routes:
+    $ref: './modules/routes.paths.yaml#/paths/~1sites~1{siteId}~1routes'
+  /sites/{siteId}/routes/{routeId}:
+    $ref: './modules/routes.paths.yaml#/paths/~1sites~1{siteId}~1routes~1{routeId}'
+  /sites/{siteId}/tsp:
+    $ref: './modules/tsp.paths.yaml#/paths/~1sites~1{siteId}~1tsp'
+components:
+  parameters:
+    f-metadata:
+      $ref: './shared/parameters.yaml#/components/parameters/f-metadata'
+    siteId:
+      $ref: './shared/parameters.yaml#/components/parameters/siteId'
+    collectionId:
+      $ref: './shared/parameters.yaml#/components/parameters/collectionId'
+    featureId:
+      $ref: './shared/parameters.yaml#/components/parameters/featureId'
+    routeId:
+      $ref: './shared/parameters.yaml#/components/parameters/routeId'
+    limit:
+      $ref: './shared/parameters.yaml#/components/parameters/limit'
+    offset:
+      $ref: './shared/parameters.yaml#/components/parameters/offset'
+    filter:
+      $ref: './shared/parameters.yaml#/components/parameters/filter'
+    filter-lang:
+      $ref: './shared/parameters.yaml#/components/parameters/filter-lang'
+    filter-crs:
+      $ref: './shared/parameters.yaml#/components/parameters/filter-crs'
+  responses:
+    LandingPage:
+      $ref: './shared/responses.yaml#/components/responses/LandingPage'
+    ApiDefinition:
+      $ref: './shared/responses.yaml#/components/responses/ApiDefinition'
+    ConformanceDeclaration:
+      $ref: './shared/responses.yaml#/components/responses/ConformanceDeclaration'
+    SitesList:
+      $ref: './shared/responses.yaml#/components/responses/SitesList'
+    SiteDetail:
+      $ref: './shared/responses.yaml#/components/responses/SiteDetail'
+    CollectionsList:
+      $ref: './shared/responses.yaml#/components/responses/CollectionsList'
+    CollectionDetail:
+      $ref: './shared/responses.yaml#/components/responses/CollectionDetail'
+    Features:
+      $ref: './shared/responses.yaml#/components/responses/Features'
+    Feature:
+      $ref: './shared/responses.yaml#/components/responses/Feature'
+    MapPng:
+      $ref: './shared/responses.yaml#/components/responses/MapPng'
+    CoverageBinary:
+      $ref: './shared/responses.yaml#/components/responses/CoverageBinary'
+    RouteList:
+      $ref: './shared/responses.yaml#/components/responses/RouteList'
+    RouteResult:
+      $ref: './shared/responses.yaml#/components/responses/RouteResult'
+    TspResult:
+      $ref: './shared/responses.yaml#/components/responses/TspResult'
+    BadRequest:
+      $ref: './shared/responses.yaml#/components/responses/BadRequest'
+    Forbidden:
+      $ref: './shared/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: './shared/responses.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: './shared/responses.yaml#/components/responses/InternalServerError'
+  schemas:
+    link:
+      $ref: './shared/schemas.common.yaml#/components/schemas/link'
+    exception:
+      $ref: './shared/schemas.common.yaml#/components/schemas/exception'
+    landingPage:
+      $ref: './shared/schemas.common.yaml#/components/schemas/landingPage'
+    conformanceDeclaration:
+      $ref: './shared/schemas.common.yaml#/components/schemas/conformanceDeclaration'
+    apiDefinition:
+      $ref: './shared/schemas.common.yaml#/components/schemas/apiDefinition'
+    siteSummary:
+      $ref: './shared/schemas.sites.yaml#/components/schemas/siteSummary'
+    sitesList:
+      $ref: './shared/schemas.sites.yaml#/components/schemas/sitesList'
+    siteDetail:
+      $ref: './shared/schemas.sites.yaml#/components/schemas/siteDetail'
+    collectionType:
+      $ref: './shared/schemas.collections.yaml#/components/schemas/collectionType'
+    collectionSummary:
+      $ref: './shared/schemas.collections.yaml#/components/schemas/collectionSummary'
+    collectionsList:
+      $ref: './shared/schemas.collections.yaml#/components/schemas/collectionsList'
+    feature:
+      $ref: './shared/schemas.features.yaml#/components/schemas/feature'
+    featureCollection:
+      $ref: './shared/schemas.features.yaml#/components/schemas/featureCollection'
+    mapLayer:
+      $ref: './shared/schemas.maps.yaml#/components/schemas/mapLayer'
+    mapResource:
+      $ref: './shared/schemas.maps.yaml#/components/schemas/mapResource'
+    pointCloudCoverage:
+      $ref: './shared/schemas.coverages.yaml#/components/schemas/pointCloudCoverage'
+    routeRequest:
+      $ref: './shared/schemas.routes.yaml#/components/schemas/routeRequest'
+    routeComputationResult:
+      $ref: './shared/schemas.routes.yaml#/components/schemas/routeComputationResult'
+    routeList:
+      $ref: './shared/schemas.routes.yaml#/components/schemas/routeList'
+    tspRequest:
+      $ref: './shared/schemas.tsp.yaml#/components/schemas/tspRequest'
+    tspResult:
+      $ref: './shared/schemas.tsp.yaml#/components/schemas/tspResult'

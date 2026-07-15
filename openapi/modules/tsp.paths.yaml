@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit TSP Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/tsp:
+    post:
+      tags:
+        - TSP
+      summary: Compute TSP sequence
+      description: Computes a TSP sequence with up to 100 points.
+      operationId: computeTsp
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../shared/schemas.tsp.yaml#/components/schemas/tspRequest'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/TspResult'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

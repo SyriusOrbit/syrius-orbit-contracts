@@ -1,0 +1,46 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Collection Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/collections:
+    get:
+      tags:
+        - Collections
+      summary: List collections in a site
+      operationId: getCollections
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/CollectionsList'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/collections/{collectionId}:
+    get:
+      tags:
+        - Collections
+      summary: Get collection metadata
+      operationId: getCollection
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/collectionId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/CollectionDetail'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

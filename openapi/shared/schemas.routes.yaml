@@ -1,0 +1,86 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Route Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    cql2Expression:
+      oneOf:
+        - type: string
+        - type: object
+          additionalProperties: true
+    routeRequest:
+      type: object
+      required:
+        - sourceFilter
+        - targetFilter
+      properties:
+        filterLang:
+          type: string
+          enum:
+            - cql2-text
+            - cql2-json
+          default: cql2-text
+        sourceFilter:
+          $ref: '#/components/schemas/cql2Expression'
+        targetFilter:
+          $ref: '#/components/schemas/cql2Expression'
+        currentVersionOnly:
+          type: boolean
+          default: true
+        profile:
+          type: string
+          description: Generic route profile.
+          default: default
+    routeFeatureCollection:
+      allOf:
+        - $ref: './schemas.features.yaml#/components/schemas/featureCollection'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - successful
+                - failed
+    routePairResult:
+      type: object
+      required:
+        - fromId
+        - toId
+        - status
+      properties:
+        fromId:
+          type: string
+        toId:
+          type: string
+        status:
+          type: string
+          enum:
+            - successful
+            - not-found
+            - failed
+        route:
+          $ref: '#/components/schemas/routeFeatureCollection'
+    routeComputationResult:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/routePairResult'
+        resultCount:
+          type: integer
+          format: int32
+          minimum: 0
+    routeList:
+      type: object
+      required:
+        - links
+      properties:
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'

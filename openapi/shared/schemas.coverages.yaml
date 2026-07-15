@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Coverage Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    pointCloudCoverage:
+      type: object
+      required:
+        - id
+        - supportedFormats
+        - links
+      properties:
+        id:
+          type: string
+          enum:
+            - pointcloud
+        supportedFormats:
+          type: array
+          items:
+            type: string
+            enum:
+              - application/vnd.las
+              - application/vnd.laz
+        defaultFormat:
+          type: string
+          enum:
+            - application/vnd.laz
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'

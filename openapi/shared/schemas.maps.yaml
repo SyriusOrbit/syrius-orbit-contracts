@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Map Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    mapLayer:
+      type: string
+      enum:
+        - origin
+        - mask
+        - merged
+    mapResource:
+      type: object
+      required:
+        - layer
+        - links
+      properties:
+        layer:
+          $ref: '#/components/schemas/mapLayer'
+        width:
+          type: integer
+          format: int32
+          minimum: 1
+        height:
+          type: integer
+          format: int32
+          minimum: 1
+        contentType:
+          type: string
+          enum:
+            - image/png
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'

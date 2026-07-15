@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Route Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/routes:
+    get:
+      tags:
+        - Routes
+      summary: List route resources
+      operationId: getRoutes
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/RouteList'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Routes
+      summary: Compute routes for filtered source and target sets
+      description: Only the current site version is routable. Historical versions are read-only.
+      operationId: computeRoutes
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../shared/schemas.routes.yaml#/components/schemas/routeRequest'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/RouteResult'
+        '201':
+          description: Route resource created.
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/routes/{routeId}:
+    get:
+      tags:
+        - Routes
+      summary: Get a route resource
+      operationId: getRoute
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/routeId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/RouteResult'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

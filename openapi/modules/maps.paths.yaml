@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Map Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/collections/gridmap/map:
+    get:
+      tags:
+        - Maps
+      summary: Get merged map image
+      description: Returns the full merged map image.
+      operationId: getMergedMapDefault
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/collections/gridmap/map/origin:
+    get:
+      tags:
+        - Maps
+      summary: Get origin map image
+      description: Returns the full origin map image.
+      operationId: getOriginMap
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/collections/gridmap/map/mask:
+    get:
+      tags:
+        - Maps
+      summary: Get mask map image
+      description: Returns the full mask map image.
+      operationId: getMaskMap
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/collections/gridmap/map/merged:
+    get:
+      tags:
+        - Maps
+      summary: Get merged map image
+      description: Returns the full merged map image.
+      operationId: getMergedMap
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

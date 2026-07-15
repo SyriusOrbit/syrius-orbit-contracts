@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Coverage Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/collections/pointcloud/coverage:
+    get:
+      tags:
+        - Coverages
+      summary: Get point cloud coverage
+      description: Returns point cloud content in LAS or LAZ based on content negotiation.
+      operationId: getPointCloudCoverage
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/CoverageBinary'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

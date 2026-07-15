@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Common Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    link:
+      type: object
+      required:
+        - href
+        - rel
+      properties:
+        href:
+          type: string
+          format: uri-reference
+        rel:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        hreflang:
+          type: string
+    exception:
+      type: object
+      description: Problem details object based on RFC 7807.
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+    landingPage:
+      type: object
+      required:
+        - links
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/link'
+    conformanceDeclaration:
+      type: object
+      required:
+        - conformsTo
+      properties:
+        conformsTo:
+          type: array
+          items:
+            type: string
+            format: uri-reference
+    apiDefinition:
+      type: object
+      required:
+        - openapiUrl
+      properties:
+        openapiUrl:
+          type: string
+          format: uri-reference
+        documentationUrl:
+          type: string
+          format: uri-reference
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/link'

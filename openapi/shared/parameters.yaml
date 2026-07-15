@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Shared Parameters
+  version: 1.0.0
+paths: {}
+components:
+  parameters:
+    f-metadata:
+      name: f
+      in: query
+      required: false
+      description: Optional response metadata format.
+      schema:
+        type: string
+        enum:
+          - json
+          - html
+        default: json
+    siteId:
+      name: siteId
+      in: path
+      required: true
+      description: Stable short site identifier.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{1,31}$'
+    collectionId:
+      name: collectionId
+      in: path
+      required: true
+      description: Collection identifier within a site.
+      schema:
+        type: string
+        enum:
+          - gridmap
+          - cell
+          - connection
+          - pointcloud
+    featureId:
+      name: featureId
+      in: path
+      required: true
+      description: Local feature identifier.
+      schema:
+        type: string
+    routeId:
+      name: routeId
+      in: path
+      required: true
+      description: Route identifier.
+      schema:
+        type: string
+    limit:
+      name: limit
+      in: query
+      required: false
+      description: Number of features returned.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 1000
+        default: 100
+    offset:
+      name: offset
+      in: query
+      required: false
+      description: Zero-based index of the first returned feature.
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    filter:
+      name: filter
+      in: query
+      required: false
+      description: CQL2 filter expression.
+      schema:
+        type: string
+    filter-lang:
+      name: filter-lang
+      in: query
+      required: false
+      description: CQL2 encoding of the filter parameter.
+      schema:
+        type: string
+        enum:
+          - cql2-text
+          - cql2-json
+        default: cql2-text
+    filter-crs:
+      name: filter-crs
+      in: query
+      required: false
+      description: CRS used by geometries in CQL2 filter.
+      schema:
+        type: string
+        format: uri-reference

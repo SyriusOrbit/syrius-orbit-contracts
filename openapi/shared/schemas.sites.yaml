@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Site Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    siteSummary:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'
+    sitesList:
+      type: object
+      required:
+        - sites
+        - links
+      properties:
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/siteSummary'
+    siteDetail:
+      allOf:
+        - $ref: '#/components/schemas/siteSummary'
+        - type: object
+          properties:
+            availableCollections:
+              type: array
+              items:
+                type: string
+                enum:
+                  - gridmap
+                  - cell
+                  - connection
+                  - pointcloud

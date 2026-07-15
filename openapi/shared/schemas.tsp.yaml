@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit TSP Schemas
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    cql2Expression:
+      oneOf:
+        - type: string
+        - type: object
+          additionalProperties: true
+    tspRequest:
+      type: object
+      required:
+        - startFilter
+        - endFilter
+        - waypointFilter
+      properties:
+        filterLang:
+          type: string
+          enum:
+            - cql2-text
+            - cql2-json
+          default: cql2-text
+        startFilter:
+          $ref: '#/components/schemas/cql2Expression'
+        endFilter:
+          $ref: '#/components/schemas/cql2Expression'
+        waypointFilter:
+          $ref: '#/components/schemas/cql2Expression'
+        maxPoints:
+          type: integer
+          format: int32
+          minimum: 2
+          maximum: 100
+          default: 100
+    tspResult:
+      type: object
+      required:
+        - orderedPointIds
+        - totalCost
+        - pointCount
+      properties:
+        orderedPointIds:
+          type: array
+          items:
+            type: string
+        totalCost:
+          type: number
+          format: double
+        lowerBound:
+          type: number
+          format: double
+        gap:
+          type: number
+          format: double
+        pointCount:
+          type: integer
+          format: int32
+          minimum: 0

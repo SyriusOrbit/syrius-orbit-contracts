@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Feature Paths
+  version: 1.0.0
+paths:
+  /sites/{siteId}/collections/{collectionId}/items:
+    get:
+      tags:
+        - Features
+      summary: Query features in cell or connection collections
+      operationId: getFeatures
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/collectionId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/limit'
+        - $ref: '../shared/parameters.yaml#/components/parameters/offset'
+        - $ref: '../shared/parameters.yaml#/components/parameters/filter'
+        - $ref: '../shared/parameters.yaml#/components/parameters/filter-lang'
+        - $ref: '../shared/parameters.yaml#/components/parameters/filter-crs'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/Features'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/collections/{collectionId}/items/{featureId}:
+    get:
+      tags:
+        - Features
+      summary: Get one feature by id
+      operationId: getFeature
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/collectionId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/featureId'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/Feature'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

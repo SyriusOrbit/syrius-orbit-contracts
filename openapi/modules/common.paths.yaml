@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Common Paths
+  version: 1.0.0
+paths:
+  /:
+    get:
+      tags:
+        - Server
+      summary: Landing page
+      operationId: getLandingPage
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/LandingPage'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /api:
+    get:
+      tags:
+        - Server
+      summary: API definition metadata
+      operationId: getApiDefinition
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/ApiDefinition'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /conformance:
+    get:
+      tags:
+        - Server
+      summary: Conformance declaration
+      operationId: getConformanceDeclaration
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/ConformanceDeclaration'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites:
+    get:
+      tags:
+        - Sites
+      summary: List accessible sites
+      operationId: getSites
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
+      responses:
+        '200':
+          $ref: '../shared/responses.yaml#/components/responses/SitesList'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'

@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Shared Responses
+  version: 1.0.0
+paths: {}
+components:
+  responses:
+    LandingPage:
+      description: API landing page.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/landingPage'
+    ApiDefinition:
+      description: API definition metadata.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/apiDefinition'
+    ConformanceDeclaration:
+      description: List of conformance classes implemented by this API.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/conformanceDeclaration'
+    SitesList:
+      description: Accessible sites list.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.sites.yaml#/components/schemas/sitesList'
+    SiteDetail:
+      description: Site details.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.sites.yaml#/components/schemas/siteDetail'
+    CollectionsList:
+      description: Site collection list.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.collections.yaml#/components/schemas/collectionsList'
+    CollectionDetail:
+      description: Collection metadata.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.collections.yaml#/components/schemas/collectionSummary'
+    Features:
+      description: Feature collection response.
+      content:
+        application/geo+json:
+          schema:
+            $ref: './schemas.features.yaml#/components/schemas/featureCollection'
+    Feature:
+      description: Feature response.
+      content:
+        application/geo+json:
+          schema:
+            $ref: './schemas.features.yaml#/components/schemas/feature'
+    MapPng:
+      description: Full map PNG image.
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+    CoverageBinary:
+      description: Point cloud coverage in LAS or LAZ.
+      content:
+        application/vnd.las:
+          schema:
+            type: string
+            format: binary
+        application/vnd.laz:
+          schema:
+            type: string
+            format: binary
+    RouteList:
+      description: Route resource list.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.routes.yaml#/components/schemas/routeList'
+    RouteResult:
+      description: Route computation result.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.routes.yaml#/components/schemas/routeComputationResult'
+    TspResult:
+      description: TSP result.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.tsp.yaml#/components/schemas/tspResult'
+    BadRequest:
+      description: Invalid request parameters or body.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/exception'
+    Forbidden:
+      description: Access denied.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/exception'
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/exception'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.common.yaml#/components/schemas/exception'
