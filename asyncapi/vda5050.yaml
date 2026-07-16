@@ -1,22 +1,299 @@
 asyncapi: 3.0.0
 info:
-  title: VDA5050 MQTT Interface
-  version: 2.0.0
-  description: VDA5050 standard interface for AGV communication in SyriusOrbit
+  title: VDA5050 MQTT Interface (Fleet Control Perspective)
+  version: 3.0.0
+  description: |
+    AsyncAPI definition of the VDA5050 communication interface over MQTT.
+    This specification models topics and message directions from the fleet control
+    perspective and references canonical payload schemas from standards/VDA5050/json_schemas.
+defaultContentType: application/json
+servers:
+  mqttBroker:
+    host: '{brokerHost}:{brokerPort}'
+    protocol: mqtt
+    protocolVersion: 3.1.1
+    description: MQTT broker used for VDA5050 message exchange.
+    variables:
+      brokerHost:
+        default: localhost
+      brokerPort:
+        default: '1883'
 channels:
   order:
-    address: 'uagv/v2/{manufacturer}/{serialNumber}/order'
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/order'
+    description: Orders sent by fleet control to a mobile robot.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
     messages:
       orderMessage:
-        name: Order
-        title: VDA5050 Order Message
-        summary: Order message sent to AGV
-        contentType: application/json
+        $ref: '#/components/messages/OrderMessage'
+
+  instantActions:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/instantActions'
+    description: Instant actions sent by fleet control to a mobile robot.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      instantActionsMessage:
+        $ref: '#/components/messages/InstantActionsMessage'
+
   state:
-    address: 'uagv/v2/{manufacturer}/{serialNumber}/state'
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/state'
+    description: State reports sent by a mobile robot to fleet control.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
     messages:
       stateMessage:
-        name: State
-        title: VDA5050 State Message
-        summary: State message from AGV
-        contentType: application/json
+        $ref: '#/components/messages/StateMessage'
+
+  visualization:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/visualization'
+    description: Optional high-frequency visualization updates from a mobile robot.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      visualizationMessage:
+        $ref: '#/components/messages/VisualizationMessage'
+
+  connection:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/connection'
+    description: Connection state published by mobile robot or broker last-will.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      connectionMessage:
+        $ref: '#/components/messages/ConnectionMessage'
+
+  factsheet:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/factsheet'
+    description: Factsheet published by a mobile robot.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      factsheetMessage:
+        $ref: '#/components/messages/FactsheetMessage'
+
+  zoneSet:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/zoneSet'
+    description: Optional zone set transfers from fleet control to mobile robot.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      zoneSetMessage:
+        $ref: '#/components/messages/ZoneSetMessage'
+
+  responses:
+    address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/responses'
+    description: Optional responses from fleet control to mobile robot requests.
+    parameters:
+      interfaceName:
+        $ref: '#/components/parameters/interfaceName'
+      majorVersion:
+        $ref: '#/components/parameters/majorVersion'
+      manufacturer:
+        $ref: '#/components/parameters/manufacturer'
+      serialNumber:
+        $ref: '#/components/parameters/serialNumber'
+    messages:
+      responsesMessage:
+        $ref: '#/components/messages/ResponsesMessage'
+
+operations:
+  receiveState:
+    action: receive
+    channel:
+      $ref: '#/channels/state'
+    summary: Fleet control receives state messages from the mobile robot.
+    messages:
+      - $ref: '#/channels/state/messages/stateMessage'
+
+  receiveVisualization:
+    action: receive
+    channel:
+      $ref: '#/channels/visualization'
+    summary: Fleet control receives optional visualization updates.
+    messages:
+      - $ref: '#/channels/visualization/messages/visualizationMessage'
+
+  receiveConnection:
+    action: receive
+    channel:
+      $ref: '#/channels/connection'
+    summary: Fleet control receives mobile robot connection state.
+    messages:
+      - $ref: '#/channels/connection/messages/connectionMessage'
+
+  receiveFactsheet:
+    action: receive
+    channel:
+      $ref: '#/channels/factsheet'
+    summary: Fleet control receives factsheet data from the mobile robot.
+    messages:
+      - $ref: '#/channels/factsheet/messages/factsheetMessage'
+
+  sendOrder:
+    action: send
+    channel:
+      $ref: '#/channels/order'
+    summary: Fleet control sends orders to the mobile robot.
+    messages:
+      - $ref: '#/channels/order/messages/orderMessage'
+
+  sendInstantActions:
+    action: send
+    channel:
+      $ref: '#/channels/instantActions'
+    summary: Fleet control sends instant actions to the mobile robot.
+    messages:
+      - $ref: '#/channels/instantActions/messages/instantActionsMessage'
+
+  sendZoneSet:
+    action: send
+    channel:
+      $ref: '#/channels/zoneSet'
+    summary: Fleet control sends zone sets to the mobile robot.
+    messages:
+      - $ref: '#/channels/zoneSet/messages/zoneSetMessage'
+
+  sendResponses:
+    action: send
+    channel:
+      $ref: '#/channels/responses'
+    summary: Fleet control responds to robot requests.
+    messages:
+      - $ref: '#/channels/responses/messages/responsesMessage'
+
+components:
+  parameters:
+    interfaceName:
+      description: Name of the VDA5050 interface level.
+      location: $message.header#/interfaceName
+      default: vda5050
+      enum:
+        - vda5050
+    majorVersion:
+      description: Major VDA5050 version topic segment (v3 for VDA5050 3.x.x).
+      location: $message.header#/majorVersion
+      default: v3
+      enum:
+        - v3
+    manufacturer:
+      description: Mobile robot manufacturer.
+      location: $message.header#/manufacturer
+    serialNumber:
+      description: Unique mobile robot serial number.
+      location: $message.header#/serialNumber
+
+  messages:
+    OrderMessage:
+      name: order
+      title: VDA5050 Order Message
+      summary: Order and order updates from fleet control to mobile robot.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/order.schema
+
+    InstantActionsMessage:
+      name: instantActions
+      title: VDA5050 Instant Actions Message
+      summary: Immediate action commands from fleet control to mobile robot.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/instantActions.schema
+
+    StateMessage:
+      name: state
+      title: VDA5050 State Message
+      summary: Current robot state and order progress.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/state.schema
+
+    VisualizationMessage:
+      name: visualization
+      title: VDA5050 Visualization Message
+      summary: Optional high-frequency position and path updates.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/visualization.schema
+
+    ConnectionMessage:
+      name: connection
+      title: VDA5050 Connection Message
+      summary: Broker or robot connection state notifications.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/connection.schema
+
+    FactsheetMessage:
+      name: factsheet
+      title: VDA5050 Factsheet Message
+      summary: Robot capability and limit declaration.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/factsheet.schema
+
+    ZoneSetMessage:
+      name: zoneSet
+      title: VDA5050 Zone Set Message
+      summary: Zone set transfer from fleet control to robot.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/zoneSet.schema
+
+    ResponsesMessage:
+      name: responses
+      title: VDA5050 Responses Message
+      summary: Fleet control responses for robot request objects.
+      contentType: application/json
+      payload:
+        $ref: ../standards/VDA5050/json_schemas/responses.schema
