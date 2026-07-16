@@ -1,8 +1,15 @@
 # syrius-orbit-contracts
 
+中文版本请见 [README.zh-CN.md](README.zh-CN.md)
+
 `syrius-orbit-contracts` is the contract repository for SyriusOrbit, a spatial information and scheduling service platform for indoor Autonomous Mobile Robots (AMRs) built on an edge-cloud collaborative architecture.
 
 This repository is the single source of truth for all API contracts used across the platform.
+
+The repository defines two API suites:
+
+- SyriusOrbit Spatial API: the OpenAPI-based contract suite for spatial data and geospatial services, aligned with the OGC API family.
+- SyriusOrbit Fleet API: the AsyncAPI-based contract suite for robot communication, scheduling, and fleet messaging, aligned with VDA 5050 and related robot interoperability standards.
 
 ## SyriusOrbit Platform Context
 
@@ -56,16 +63,16 @@ The cloud stack is implemented with Java Spring Cloud microservices and delivers
 
 All standards listed below must be strictly defined and constrained through:
 
-- OpenAPI for synchronous HTTP interfaces
-- AsyncAPI for asynchronous MQTT messaging
+- OpenAPI for the SyriusOrbit Spatial API
+- AsyncAPI for the SyriusOrbit Fleet API
 
-### Robot Communication and Scheduling Standards
+### SyriusOrbit Fleet API Standards
 
 - VDA 5050: Standardized communication interface for task dispatch and state feedback between AGV/AMR fleets and fleet management systems.
 - MRIS (Mobile Robot Interoperability Standard): Interoperability standard for robot state exchange among robots, schedulers, and external enterprise systems.
 - ISO 21423 (Robotics - Industrial mobile robots - Communications and interoperability): Planned support for this upcoming industrial mobile robot interoperability standard once it is formally published.
 
-### Spatial Data Service Standards (OGC API Family)
+### SyriusOrbit Spatial API Standards (OGC API Family)
 
 - OGC API Common: Core OGC API foundation defining shared resource-oriented and RESTful patterns.
 - OGC API Features: Standard interface for creating, updating, and querying geospatial feature data.

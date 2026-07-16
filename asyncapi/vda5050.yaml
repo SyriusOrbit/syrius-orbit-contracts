@@ -1,11 +1,12 @@
 asyncapi: 3.0.0
 info:
-  title: VDA5050 MQTT Interface (Fleet Control Perspective)
+  title: SyriusOrbit Fleet API
   version: 3.0.0
   description: |
-    AsyncAPI definition of the VDA5050 communication interface over MQTT.
-    This specification models topics and message directions from the fleet control
-    perspective and references canonical payload schemas from standards/VDA5050/json_schemas.
+    AsyncAPI definition of the SyriusOrbit Fleet API over MQTT.
+    This specification models robot communication, scheduling, and fleet messaging
+    with VDA5050-based topics and message directions, and references canonical payload
+    schemas from standards/VDA5050/json_schemas.
 defaultContentType: application/json
 servers:
   mqttBroker:
