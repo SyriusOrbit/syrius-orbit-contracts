@@ -9,8 +9,6 @@ paths:
         - Server
       summary: Landing page
       operationId: getLandingPage
-      parameters:
-        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
       responses:
         '200':
           $ref: '../shared/responses.yaml#/components/responses/LandingPage'
@@ -26,8 +24,6 @@ paths:
         - Server
       summary: API definition metadata
       operationId: getApiDefinition
-      parameters:
-        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
       responses:
         '200':
           $ref: '../shared/responses.yaml#/components/responses/ApiDefinition'
@@ -43,8 +39,6 @@ paths:
         - Server
       summary: Conformance declaration
       operationId: getConformanceDeclaration
-      parameters:
-        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
       responses:
         '200':
           $ref: '../shared/responses.yaml#/components/responses/ConformanceDeclaration'
@@ -60,8 +54,6 @@ paths:
         - Sites
       summary: List accessible sites
       operationId: getSites
-      parameters:
-        - $ref: '../shared/parameters.yaml#/components/parameters/f-metadata'
       responses:
         '200':
           $ref: '../shared/responses.yaml#/components/responses/SitesList'

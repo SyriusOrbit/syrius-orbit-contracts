@@ -70,8 +70,6 @@ paths:
     $ref: './modules/tsp.paths.yaml#/paths/~1sites~1{siteId}~1tsp'
 components:
   parameters:
-    f-metadata:
-      $ref: './shared/parameters.yaml#/components/parameters/f-metadata'
     siteId:
       $ref: './shared/parameters.yaml#/components/parameters/siteId'
     collectionId:

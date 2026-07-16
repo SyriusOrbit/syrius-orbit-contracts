@@ -5,17 +5,6 @@ info:
 paths: {}
 components:
   parameters:
-    f-metadata:
-      name: f
-      in: query
-      required: false
-      description: Optional response metadata format.
-      schema:
-        type: string
-        enum:
-          - json
-          - html
-        default: json
     siteId:
       name: siteId
       in: path
