@@ -59,13 +59,12 @@ components:
         application/geo+json:
           schema:
             $ref: './schemas.features.yaml#/components/schemas/feature'
-    MapPng:
-      description: Full map PNG image.
+    MapResource:
+      description: Map resource metadata.
       content:
-        image/png:
+        application/json:
           schema:
-            type: string
-            format: binary
+            $ref: './schemas.maps.yaml#/components/schemas/mapResource'
     CoverageBinary:
       description: Point cloud coverage in LAS or LAZ.
       content:

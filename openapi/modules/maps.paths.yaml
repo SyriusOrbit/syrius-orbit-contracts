@@ -14,7 +14,7 @@ paths:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
       responses:
         '200':
-          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+          $ref: '../shared/responses.yaml#/components/responses/MapResource'
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':
@@ -34,7 +34,7 @@ paths:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
       responses:
         '200':
-          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+          $ref: '../shared/responses.yaml#/components/responses/MapResource'
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':
@@ -54,7 +54,7 @@ paths:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
       responses:
         '200':
-          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+          $ref: '../shared/responses.yaml#/components/responses/MapResource'
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':
@@ -74,7 +74,7 @@ paths:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
       responses:
         '200':
-          $ref: '../shared/responses.yaml#/components/responses/MapPng'
+          $ref: '../shared/responses.yaml#/components/responses/MapResource'
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':

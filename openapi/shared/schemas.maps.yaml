@@ -11,6 +11,7 @@ components:
         - origin
         - mask
         - merged
+      default: merged
     mapResource:
       type: object
       required:
@@ -19,14 +20,15 @@ components:
       properties:
         layer:
           $ref: '#/components/schemas/mapLayer'
-        width:
-          type: integer
-          format: int32
-          minimum: 1
-        height:
-          type: integer
-          format: int32
-          minimum: 1
+        bbox:
+          description: Bounding box of the map in minx,miny,maxx,maxy format.
+          type: string
+          example: -1.0,-2.0,3.4,5.6
+        resolution:
+          description: Size represented by one pixel.
+          type: number
+          minimum: 0
+          example: 0.02
         contentType:
           type: string
           enum:

@@ -107,8 +107,8 @@ components:
       $ref: './shared/responses.yaml#/components/responses/Features'
     Feature:
       $ref: './shared/responses.yaml#/components/responses/Feature'
-    MapPng:
-      $ref: './shared/responses.yaml#/components/responses/MapPng'
+    MapResource:
+      $ref: './shared/responses.yaml#/components/responses/MapResource'
     CoverageBinary:
       $ref: './shared/responses.yaml#/components/responses/CoverageBinary'
     RouteList:
