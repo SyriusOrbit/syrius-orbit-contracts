@@ -85,9 +85,15 @@ components:
     RouteResult:
       description: Route computation result.
       content:
-        application/json:
+        application/geo+json:
           schema:
             $ref: './schemas.routes.yaml#/components/schemas/routeComputationResult'
+    RouteDefinition:
+      description: Original route definition.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.routes.yaml#/components/schemas/routeDefinition'
     TspResult:
       description: TSP result.
       content:

@@ -7,9 +7,11 @@ paths:
     post:
       tags:
         - TSP
-      summary: Compute TSP sequence
-      description: Computes a TSP sequence with up to 100 points.
-      operationId: computeTsp
+      summary: Compute traveling salesman problem
+      description: |-
+        Computes a TSP sequence from a set of candidate cell IDs.
+        Optional start/end IDs can be supplied to anchor the sequence.
+      operationId: computeTSP
       parameters:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
       requestBody:

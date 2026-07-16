@@ -39,6 +39,29 @@ components:
       description: Route identifier.
       schema:
         type: string
+    resultSet:
+      name: resultSet
+      in: query
+      required: false
+      description: Request the complete route or only a subset.
+      schema:
+        type: string
+        enum:
+          - full
+          - overview
+          - segments
+        default: full
+    mode:
+      name: mode
+      in: query
+      required: false
+      description: Controls asynchronous or synchronous route computation.
+      schema:
+        type: string
+        enum:
+          - async
+          - sync
+        default: async
     limit:
       name: limit
       in: query
@@ -83,6 +106,25 @@ components:
       in: query
       required: false
       description: CRS used by geometries in CQL2 filter.
+      schema:
+        type: string
+        format: uri-reference
+    cql2-lang-header:
+      name: filter-lang
+      in: header
+      required: false
+      description: CQL2 encoding used by filter expressions in request bodies.
+      schema:
+        type: string
+        enum:
+          - cql2-text
+          - cql2-json
+        default: cql2-text
+    cql2-crs-header:
+      name: filter-crs
+      in: header
+      required: false
+      description: CRS used by geometries in CQL2 expressions in request bodies.
       schema:
         type: string
         format: uri-reference

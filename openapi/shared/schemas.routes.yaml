@@ -10,77 +10,241 @@ components:
         - type: string
         - type: object
           additionalProperties: true
-    routeRequest:
+
+    statusEnum:
+      type: string
+      enum:
+        - accepted
+        - running
+        - successful
+        - failed
+
+    routeDefinition:
       type: object
-      required:
-        - sourceFilter
-        - targetFilter
       properties:
-        filterLang:
+        name:
           type: string
-          enum:
-            - cql2-text
-            - cql2-json
-          default: cql2-text
-        sourceFilter:
-          $ref: '#/components/schemas/cql2Expression'
-        targetFilter:
-          $ref: '#/components/schemas/cql2Expression'
-        currentVersionOnly:
-          type: boolean
-          default: true
-        profile:
-          type: string
-          description: Generic route profile.
-          default: default
-    routeFeatureCollection:
-      allOf:
-        - $ref: './schemas.features.yaml#/components/schemas/featureCollection'
-        - type: object
+          description: Optional route name used in route listings.
+        pois:
+          type: object
+          required:
+            - source_filter
+            - target_filter
           properties:
-            status:
+            source_filter:
+              $ref: '#/components/schemas/cql2Expression'
+            target_filter:
+              $ref: '#/components/schemas/cql2Expression'
+            multi_targets_strategy:
               type: string
               enum:
-                - successful
-                - failed
-    routePairResult:
-      type: object
-      required:
-        - fromId
-        - toId
-        - status
-      properties:
-        fromId:
-          type: string
-        toId:
-          type: string
-        status:
+                - closest
+                - fastest
+                - uniform_random
+              default: closest
+        waypoints:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum:
+                - MultiPoint
+            coordinates:
+              type: array
+              minItems: 2
+              items:
+                type: array
+                minItems: 2
+                items:
+                  type: number
+        preference:
           type: string
           enum:
-            - successful
-            - not-found
-            - failed
-        route:
-          $ref: '#/components/schemas/routeFeatureCollection'
-    routeComputationResult:
+            - fastest
+            - shortest
+          default: fastest
+
+    routes:
       type: object
-      required:
-        - results
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/routePairResult'
-        resultCount:
-          type: integer
-          format: int32
-          minimum: 0
-    routeList:
-      type: object
-      required:
-        - links
       properties:
         links:
           type: array
           items:
             $ref: './schemas.common.yaml#/components/schemas/link'
+
+    route-start-or-end:
+      type: object
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        properties:
+          type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - start
+                - end
+        geometry:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum:
+                - Point
+            coordinates:
+              type: array
+              minItems: 2
+              items:
+                type: number
+
+    route-overview:
+      type: object
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        properties:
+          type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - route overview
+            length_m:
+              type: number
+            duration_s:
+              type: number
+        geometry:
+          type: object
+          nullable: true
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum:
+                - LineString
+            coordinates:
+              type: array
+              minItems: 2
+              items:
+                type: array
+                minItems: 2
+                items:
+                  type: number
+
+    route-segment:
+      type: object
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        properties:
+          type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - segment
+            length_m:
+              type: number
+            duration_s:
+              type: number
+        geometry:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum:
+                - Point
+            coordinates:
+              type: array
+              minItems: 2
+              items:
+                type: number
+
+    route:
+      type: object
+      required:
+        - type
+        - status
+        - features
+      properties:
+        type:
+          type: string
+          enum:
+            - FeatureCollection
+        status:
+          $ref: '#/components/schemas/statusEnum'
+        name:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: './schemas.common.yaml#/components/schemas/link'
+        features:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/route-overview'
+              - $ref: '#/components/schemas/route-start-or-end'
+              - $ref: '#/components/schemas/route-segment'
+        bbox:
+          type: array
+          minItems: 4
+          items:
+            type: number
+
+    routeRequest:
+      $ref: '#/components/schemas/routeDefinition'
+
+    routeComputationResult:
+      $ref: '#/components/schemas/route'
+
+    routeList:
+      $ref: '#/components/schemas/routes'

@@ -7,7 +7,10 @@ paths:
     get:
       tags:
         - Routes
-      summary: List route resources
+      summary: Fetch the list of routes
+      description: |-
+        The list of all routes currently available for the site.
+        The response contains links to each route resource.
       operationId: getRoutes
       parameters:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
@@ -25,12 +28,19 @@ paths:
     post:
       tags:
         - Routes
-      summary: Compute routes for filtered source and target sets
-      description: Only the current site version is routable. Historical versions are read-only.
-      operationId: computeRoutes
+      summary: Compute a route
+      description: |-
+        This creates a new route from a route definition.
+        If `mode=sync`, the response contains the route.
+        If `mode=async` (default), the route resource is created and processed asynchronously.
+      operationId: computeRoute
       parameters:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/mode'
+        - $ref: '../shared/parameters.yaml#/components/parameters/cql2-lang-header'
+        - $ref: '../shared/parameters.yaml#/components/parameters/cql2-crs-header'
       requestBody:
+        description: The definition of the route to compute.
         required: true
         content:
           application/json:
@@ -38,9 +48,10 @@ paths:
               $ref: '../shared/schemas.routes.yaml#/components/schemas/routeRequest'
       responses:
         '200':
+          description: Returned for synchronous processing (`mode=sync`).
           $ref: '../shared/responses.yaml#/components/responses/RouteResult'
         '201':
-          description: Route resource created.
+          description: Returned for asynchronous processing. Route resource created.
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':
@@ -53,14 +64,46 @@ paths:
     get:
       tags:
         - Routes
-      summary: Get a route resource
+      summary: Fetch a route
+      description: |-
+        Returns the computed route as a GeoJSON feature collection.
+        The `resultSet` parameter may request a subset of the route payload.
       operationId: getRoute
+      parameters:
+        - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/routeId'
+        - $ref: '../shared/parameters.yaml#/components/parameters/resultSet'
+      responses:
+        '200':
+          description: Route content or route subset depending on `resultSet`.
+          content:
+            application/geo+json:
+              schema:
+                oneOf:
+                  - $ref: '../shared/schemas.routes.yaml#/components/schemas/routeComputationResult'
+                  - $ref: '../shared/schemas.routes.yaml#/components/schemas/route-overview'
+                  - $ref: '../shared/schemas.routes.yaml#/components/schemas/route-segment'
+        '400':
+          $ref: '../shared/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../shared/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../shared/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../shared/responses.yaml#/components/responses/InternalServerError'
+  /sites/{siteId}/routes/{routeId}/definition:
+    get:
+      tags:
+        - Routes
+      summary: Fetch the definition of a route
+      description: Returns the original definition submitted when creating the route.
+      operationId: getRouteDefinition
       parameters:
         - $ref: '../shared/parameters.yaml#/components/parameters/siteId'
         - $ref: '../shared/parameters.yaml#/components/parameters/routeId'
       responses:
         '200':
-          $ref: '../shared/responses.yaml#/components/responses/RouteResult'
+          $ref: '../shared/responses.yaml#/components/responses/RouteDefinition'
         '400':
           $ref: '../shared/responses.yaml#/components/responses/BadRequest'
         '403':

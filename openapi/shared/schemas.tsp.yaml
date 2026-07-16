@@ -5,57 +5,42 @@ info:
 paths: {}
 components:
   schemas:
-    cql2Expression:
-      oneOf:
-        - type: string
-        - type: object
-          additionalProperties: true
     tspRequest:
       type: object
       required:
-        - startFilter
-        - endFilter
-        - waypointFilter
+        - cell_ids
       properties:
-        filterLang:
-          type: string
-          enum:
-            - cql2-text
-            - cql2-json
-          default: cql2-text
-        startFilter:
-          $ref: '#/components/schemas/cql2Expression'
-        endFilter:
-          $ref: '#/components/schemas/cql2Expression'
-        waypointFilter:
-          $ref: '#/components/schemas/cql2Expression'
-        maxPoints:
-          type: integer
-          format: int32
-          minimum: 2
-          maximum: 100
-          default: 100
-    tspResult:
-      type: object
-      required:
-        - orderedPointIds
-        - totalCost
-        - pointCount
-      properties:
-        orderedPointIds:
+        cell_ids:
           type: array
           items:
             type: string
-        totalCost:
+        start:
+          type: string
+        end:
+          type: string
+    tspResult:
+      type: object
+      required:
+        - cell_id_sequence
+        - cost
+      properties:
+        cell_id_sequence:
+          type: array
+          items:
+            type: string
+        start:
+          type: string
+        end:
+          type: string
+        cost:
           type: number
           format: double
         lowerBound:
           type: number
           format: double
+        lower_bound:
+          type: number
+          format: double
         gap:
           type: number
           format: double
-        pointCount:
-          type: integer
-          format: int32
-          minimum: 0

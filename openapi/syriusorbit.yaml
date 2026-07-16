@@ -66,6 +66,8 @@ paths:
     $ref: './modules/routes.paths.yaml#/paths/~1sites~1{siteId}~1routes'
   /sites/{siteId}/routes/{routeId}:
     $ref: './modules/routes.paths.yaml#/paths/~1sites~1{siteId}~1routes~1{routeId}'
+  /sites/{siteId}/routes/{routeId}/definition:
+    $ref: './modules/routes.paths.yaml#/paths/~1sites~1{siteId}~1routes~1{routeId}~1definition'
   /sites/{siteId}/tsp:
     $ref: './modules/tsp.paths.yaml#/paths/~1sites~1{siteId}~1tsp'
 components:
@@ -78,6 +80,10 @@ components:
       $ref: './shared/parameters.yaml#/components/parameters/featureId'
     routeId:
       $ref: './shared/parameters.yaml#/components/parameters/routeId'
+    resultSet:
+      $ref: './shared/parameters.yaml#/components/parameters/resultSet'
+    mode:
+      $ref: './shared/parameters.yaml#/components/parameters/mode'
     limit:
       $ref: './shared/parameters.yaml#/components/parameters/limit'
     offset:
@@ -115,6 +121,8 @@ components:
       $ref: './shared/responses.yaml#/components/responses/RouteList'
     RouteResult:
       $ref: './shared/responses.yaml#/components/responses/RouteResult'
+    RouteDefinition:
+      $ref: './shared/responses.yaml#/components/responses/RouteDefinition'
     TspResult:
       $ref: './shared/responses.yaml#/components/responses/TspResult'
     BadRequest:
@@ -158,10 +166,14 @@ components:
       $ref: './shared/schemas.coverages.yaml#/components/schemas/pointCloudCoverage'
     routeRequest:
       $ref: './shared/schemas.routes.yaml#/components/schemas/routeRequest'
+    routeDefinition:
+      $ref: './shared/schemas.routes.yaml#/components/schemas/routeDefinition'
     routeComputationResult:
       $ref: './shared/schemas.routes.yaml#/components/schemas/routeComputationResult'
     routeList:
       $ref: './shared/schemas.routes.yaml#/components/schemas/routeList'
+    route:
+      $ref: './shared/schemas.routes.yaml#/components/schemas/route'
     tspRequest:
       $ref: './shared/schemas.tsp.yaml#/components/schemas/tspRequest'
     tspResult:
