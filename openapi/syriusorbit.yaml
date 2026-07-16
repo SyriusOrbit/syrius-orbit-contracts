@@ -136,12 +136,10 @@ components:
       $ref: './shared/schemas.common.yaml#/components/schemas/conformanceDeclaration'
     apiDefinition:
       $ref: './shared/schemas.common.yaml#/components/schemas/apiDefinition'
-    siteSummary:
-      $ref: './shared/schemas.sites.yaml#/components/schemas/siteSummary'
+    site:
+      $ref: './shared/schemas.sites.yaml#/components/schemas/site'
     sitesList:
       $ref: './shared/schemas.sites.yaml#/components/schemas/sitesList'
-    siteDetail:
-      $ref: './shared/schemas.sites.yaml#/components/schemas/siteDetail'
     collectionType:
       $ref: './shared/schemas.collections.yaml#/components/schemas/collectionType'
     collectionSummary:

@@ -5,7 +5,7 @@ info:
 paths: {}
 components:
   schemas:
-    siteSummary:
+    site:
       type: object
       required:
         - id
@@ -34,18 +34,4 @@ components:
         sites:
           type: array
           items:
-            $ref: '#/components/schemas/siteSummary'
-    siteDetail:
-      allOf:
-        - $ref: '#/components/schemas/siteSummary'
-        - type: object
-          properties:
-            availableCollections:
-              type: array
-              items:
-                type: string
-                enum:
-                  - gridmap
-                  - cell
-                  - connection
-                  - pointcloud
+            $ref: '#/components/schemas/site'

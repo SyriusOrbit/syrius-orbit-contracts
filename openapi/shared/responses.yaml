@@ -34,7 +34,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: './schemas.sites.yaml#/components/schemas/siteDetail'
+            $ref: './schemas.sites.yaml#/components/schemas/site'
     CollectionsList:
       description: Site collection list.
       content:
