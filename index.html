@@ -41,7 +41,7 @@
       }
 
       main {
-        width: min(920px, 100%);
+        width: min(1120px, 100%);
       }
 
       .hero {
@@ -160,9 +160,10 @@
         <h1 id="page-title">SyriusOrbit API overview.</h1>
         <p class="lead">
           SyriusOrbit is a spatial information and scheduling service platform for indoor Autonomous Mobile Robots
-          (AMRs). Its API surface is organized into two suites: the SyriusOrbit Spatial API, which uses OpenAPI for
-          spatial data and geospatial services aligned with the OGC API family, and the SyriusOrbit Fleet Control API,
-          which uses AsyncAPI for robot communication, scheduling, and fleet messaging aligned with VDA 5050 and
+          (AMRs). Its API surface is organized into three suites: the SyriusOrbit Spatial API, which uses OpenAPI for
+          spatial data and geospatial services aligned with the OGC API family, the SyriusOrbit Fleet Management API,
+          which uses OpenAPI for HTTP fleet resources and orchestration workflows, and the SyriusOrbit Fleet Control
+          API, which uses AsyncAPI for robot communication, scheduling, and fleet messaging aligned with VDA 5050 and
           related robot interoperability standards.
         </p>
 
@@ -178,8 +179,24 @@
               <li>Maps, coverages, routes, and moving features</li>
               <li>Documented as a REST-oriented API contract</li>
             </ul>
-            <a class="panel-link" href="./swagger-ui-5.32.8/index.html">
+            <a class="panel-link" href="./swagger-ui-5.32.8/index.html?spec=spatial">
               Open Spatial documentation <span aria-hidden="true">→</span>
+            </a>
+          </section>
+
+          <section class="panel">
+            <h2>SyriusOrbit Fleet Management API</h2>
+            <p>
+              The Fleet Management API focuses on HTTP fleet resources, orchestration workflows, and operational
+              views consumed by frontends and related systems.
+            </p>
+            <ul>
+              <li>Robot lists, task views, factsheets, and overview resources</li>
+              <li>Project-specific management contracts modeled with OpenAPI</li>
+              <li>Currently introduced as a draft demo specification</li>
+            </ul>
+            <a class="panel-link" href="./swagger-ui-5.32.8/index.html?spec=fleet-management">
+              Open Fleet Management documentation <span aria-hidden="true">→</span>
             </a>
           </section>
 

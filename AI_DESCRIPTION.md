@@ -8,8 +8,8 @@ This document defines AI-facing context, writing rules, and execution workflow f
 
 This repository contains:
 
-- OpenAPI contracts for synchronous HTTP APIs
-- AsyncAPI contracts for asynchronous MQTT messaging
+- OpenAPI contracts for the Spatial API and Fleet Management API
+- AsyncAPI contracts for the Fleet Control API and asynchronous MQTT messaging
 
 All downstream components must implement or generate code from these contracts, including C++ Daemon, optional C++ SDK integrations, Java cloud services, TypeScript console applications, and integration tests.
 

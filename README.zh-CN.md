@@ -4,9 +4,10 @@
 
 本仓库是平台中所有 API 契约的唯一事实来源。
 
-本仓库定义了两套 API：
+本仓库定义了三套 API：
 
 - SyriusOrbit Spatial API：基于 OpenAPI 的契约套件，用于空间数据与地理信息服务，并与 OGC API 系列保持一致。
+- SyriusOrbit Fleet Management API：基于 OpenAPI 的契约套件，用于面向前端和关联系统的 HTTP 车队资源、编排流程和运行视图。
 - SyriusOrbit Fleet Control API：基于 AsyncAPI 的契约套件，用于机器人通信、调度与车队消息，并与 VDA 5050 及相关机器人互操作标准保持一致。
 
 ## SyriusOrbit 平台上下文
@@ -59,10 +60,17 @@ SyriusOrbit 采用混合边云系统架构：
 
 ## 标准覆盖范围
 
-下列所有标准都必须通过以下方式被严格定义和约束：
+下列所有标准和契约套件都必须通过以下方式被严格定义和约束：
 
 - OpenAPI 用于 SyriusOrbit Spatial API
+- OpenAPI 用于 SyriusOrbit Fleet Management API
 - AsyncAPI 用于 SyriusOrbit Fleet Control API
+
+### SyriusOrbit Fleet Management API 范围
+
+- 面向机器人、任务、factsheet 和车队级运行视图的 HTTP 资源接口。
+- 面向前端和关联系统的项目级管理契约，而不是对 VDA 5050 topics 的直接镜像。
+- 初始 demo 契约位于 `openapi/fleet-management.yaml`。
 
 ### SyriusOrbit Fleet Control API 标准
 

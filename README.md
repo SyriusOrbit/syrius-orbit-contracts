@@ -6,9 +6,10 @@
 
 This repository is the single source of truth for all API contracts used across the platform.
 
-The repository defines two API suites:
+The repository defines three API suites:
 
 - SyriusOrbit Spatial API: the OpenAPI-based contract suite for spatial data and geospatial services, aligned with the OGC API family.
+- SyriusOrbit Fleet Management API: the OpenAPI-based contract suite for HTTP fleet resources, orchestration workflows, and operational views consumed by frontends and related systems.
 - SyriusOrbit Fleet Control API: the AsyncAPI-based contract suite for robot communication, scheduling, and fleet messaging, aligned with VDA 5050 and related robot interoperability standards.
 
 ## SyriusOrbit Platform Context
@@ -61,10 +62,17 @@ The cloud stack is implemented with Java Spring Cloud microservices and delivers
 
 ## Standards Coverage
 
-All standards listed below must be strictly defined and constrained through:
+All standards and contract suites listed below must be strictly defined and constrained through:
 
 - OpenAPI for the SyriusOrbit Spatial API
+- OpenAPI for the SyriusOrbit Fleet Management API
 - AsyncAPI for the SyriusOrbit Fleet Control API
+
+### SyriusOrbit Fleet Management API Scope
+
+- HTTP-based fleet resources for robots, tasks, factsheets, and fleet-level operational views.
+- Project-specific management contracts for frontends and related systems rather than a direct mirror of VDA 5050 topics.
+- An initial demo contract is available at `openapi/fleet-management.yaml`.
 
 ### SyriusOrbit Fleet Control API Standards
 

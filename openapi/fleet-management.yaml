@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: SyriusOrbit Fleet Management API
+  version: 0.1.0
+  description: |-
+    Draft OpenAPI definition of the SyriusOrbit Fleet Management API.
+    This demo contract introduces the intended HTTP management surface for
+    fleet resources consumed by frontends and related systems.
+  contact:
+    name: SyriusOrbit Maintainers
+    url: https://github.com/SyriusOrbit/syrius-orbit-contracts
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: /
+security: []
+tags:
+  - name: Robots
+    description: Fleet robot inventory and live summaries.
+  - name: Tasks
+    description: Fleet task monitoring resources.
+  - name: Fleet
+    description: Fleet-wide operational overview resources.
+paths:
+  /robots:
+    get:
+      tags:
+        - Robots
+      summary: List robots.
+      description: Retrieve a draft list of robots currently known to the fleet management plane.
+      operationId: listRobots
+      responses:
+        '200':
+          description: Robot list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RobotList'
+              examples:
+                sample:
+                  value:
+                    robots:
+                      - robotId: amr-001
+                        displayName: AMR 001
+                        connectionState: ONLINE
+                        operatingMode: AUTOMATIC
+                        batteryLevel: 87.5
+                        lastSeenAt: '2026-07-29T09:30:00Z'
+                      - robotId: amr-002
+                        displayName: AMR 002
+                        connectionState: OFFLINE
+                        operatingMode: MANUAL
+                        batteryLevel: 41.0
+                        lastSeenAt: '2026-07-29T09:18:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /robots/{robotId}:
+    get:
+      tags:
+        - Robots
+      summary: Get a robot.
+      description: Retrieve a draft detail view for a single robot resource.
+      operationId: getRobot
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+      responses:
+        '200':
+          description: Robot detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RobotDetail'
+              examples:
+                sample:
+                  value:
+                    robotId: amr-001
+                    displayName: AMR 001
+                    manufacturer: Syrius Robotics
+                    model: SOR-Carrier
+                    connectionState: ONLINE
+                    operatingMode: AUTOMATIC
+                    batteryLevel: 87.5
+                    currentTaskId: task-1024
+                    factsheetAvailable: true
+                    lastSeenAt: '2026-07-29T09:30:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks.
+      description: Retrieve a draft list of tasks tracked by the fleet management plane.
+      operationId: listTasks
+      responses:
+        '200':
+          description: Task list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+              examples:
+                sample:
+                  value:
+                    tasks:
+                      - taskId: task-1024
+                        status: RUNNING
+                        assignedRobotId: amr-001
+                        createdAt: '2026-07-29T09:00:00Z'
+                      - taskId: task-1025
+                        status: QUEUED
+                        assignedRobotId: null
+                        createdAt: '2026-07-29T09:12:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /fleet/overview:
+    get:
+      tags:
+        - Fleet
+      summary: Get fleet overview.
+      description: Retrieve a draft aggregated overview of the fleet.
+      operationId: getFleetOverview
+      responses:
+        '200':
+          description: Fleet overview returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetOverview'
+              examples:
+                sample:
+                  value:
+                    robotCount: 12
+                    onlineRobotCount: 10
+                    activeTaskCount: 7
+                    queuedTaskCount: 5
+                    updatedAt: '2026-07-29T09:30:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    robotId:
+      name: robotId
+      in: path
+      required: true
+      description: Unique robot identifier.
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: The request is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalServerError:
+      description: The server failed to process the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Problem:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: BAD_REQUEST
+        message:
+          type: string
+          example: The request parameters are invalid.
+    RobotList:
+      type: object
+      required:
+        - robots
+      properties:
+        robots:
+          type: array
+          items:
+            $ref: '#/components/schemas/RobotSummary'
+    RobotSummary:
+      type: object
+      required:
+        - robotId
+        - displayName
+        - connectionState
+        - operatingMode
+        - batteryLevel
+        - lastSeenAt
+      properties:
+        robotId:
+          type: string
+          example: amr-001
+        displayName:
+          type: string
+          example: AMR 001
+        connectionState:
+          type: string
+          enum:
+            - ONLINE
+            - OFFLINE
+            - HIBERNATING
+            - CONNECTION_BROKEN
+        operatingMode:
+          type: string
+          enum:
+            - STARTUP
+            - AUTOMATIC
+            - SEMIAUTOMATIC
+            - INTERVENED
+            - MANUAL
+            - SERVICE
+            - TEACH_IN
+        batteryLevel:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 87.5
+        lastSeenAt:
+          type: string
+          format: date-time
+          example: '2026-07-29T09:30:00Z'
+    RobotDetail:
+      allOf:
+        - $ref: '#/components/schemas/RobotSummary'
+        - type: object
+          required:
+            - manufacturer
+            - model
+            - factsheetAvailable
+          properties:
+            manufacturer:
+              type: string
+              example: Syrius Robotics
+            model:
+              type: string
+              example: SOR-Carrier
+            currentTaskId:
+              type: string
+              nullable: true
+              example: task-1024
+            factsheetAvailable:
+              type: boolean
+              example: true
+    TaskList:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskSummary'
+    TaskSummary:
+      type: object
+      required:
+        - taskId
+        - status
+        - createdAt
+      properties:
+        taskId:
+          type: string
+          example: task-1024
+        status:
+          type: string
+          enum:
+            - QUEUED
+            - RUNNING
+            - SUCCEEDED
+            - FAILED
+            - CANCELED
+        assignedRobotId:
+          type: string
+          nullable: true
+          example: amr-001
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-07-29T09:00:00Z'
+    FleetOverview:
+      type: object
+      required:
+        - robotCount
+        - onlineRobotCount
+        - activeTaskCount
+        - queuedTaskCount
+        - updatedAt
+      properties:
+        robotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 12
+        onlineRobotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 10
+        activeTaskCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 7
+        queuedTaskCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 5
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-07-29T09:30:00Z'
