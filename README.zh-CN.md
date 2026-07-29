@@ -7,7 +7,7 @@
 本仓库定义了两套 API：
 
 - SyriusOrbit Spatial API：基于 OpenAPI 的契约套件，用于空间数据与地理信息服务，并与 OGC API 系列保持一致。
-- SyriusOrbit Fleet API：基于 AsyncAPI 的契约套件，用于机器人通信、调度与车队消息，并与 VDA 5050 及相关机器人互操作标准保持一致。
+- SyriusOrbit Fleet Control API：基于 AsyncAPI 的契约套件，用于机器人通信、调度与车队消息，并与 VDA 5050 及相关机器人互操作标准保持一致。
 
 ## SyriusOrbit 平台上下文
 
@@ -62,9 +62,9 @@ SyriusOrbit 采用混合边云系统架构：
 下列所有标准都必须通过以下方式被严格定义和约束：
 
 - OpenAPI 用于 SyriusOrbit Spatial API
-- AsyncAPI 用于 SyriusOrbit Fleet API
+- AsyncAPI 用于 SyriusOrbit Fleet Control API
 
-### SyriusOrbit Fleet API 标准
+### SyriusOrbit Fleet Control API 标准
 
 - VDA 5050：用于 AGV/AMR 车队与车队管理系统之间任务下发和状态反馈的标准化通信接口。
 - MRIS（Mobile Robot Interoperability Standard）：用于机器人、调度器和外部企业系统之间机器人状态交换的互操作标准。

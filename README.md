@@ -9,7 +9,7 @@ This repository is the single source of truth for all API contracts used across 
 The repository defines two API suites:
 
 - SyriusOrbit Spatial API: the OpenAPI-based contract suite for spatial data and geospatial services, aligned with the OGC API family.
-- SyriusOrbit Fleet API: the AsyncAPI-based contract suite for robot communication, scheduling, and fleet messaging, aligned with VDA 5050 and related robot interoperability standards.
+- SyriusOrbit Fleet Control API: the AsyncAPI-based contract suite for robot communication, scheduling, and fleet messaging, aligned with VDA 5050 and related robot interoperability standards.
 
 ## SyriusOrbit Platform Context
 
@@ -64,9 +64,9 @@ The cloud stack is implemented with Java Spring Cloud microservices and delivers
 All standards listed below must be strictly defined and constrained through:
 
 - OpenAPI for the SyriusOrbit Spatial API
-- AsyncAPI for the SyriusOrbit Fleet API
+- AsyncAPI for the SyriusOrbit Fleet Control API
 
-### SyriusOrbit Fleet API Standards
+### SyriusOrbit Fleet Control API Standards
 
 - VDA 5050: Standardized communication interface for task dispatch and state feedback between AGV/AMR fleets and fleet management systems.
 - MRIS (Mobile Robot Interoperability Standard): Interoperability standard for robot state exchange among robots, schedulers, and external enterprise systems.
