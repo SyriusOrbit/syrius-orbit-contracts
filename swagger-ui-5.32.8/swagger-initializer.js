@@ -6,8 +6,8 @@ window.onload = function() {
 
   window.ui = SwaggerUIBundle({
     urls: [
-      { url: "../openapi/syriusorbit.yaml", name: "SyriusOrbit Spatial API" },
-      { url: "../openapi/fleet-management.yaml", name: "SyriusOrbit Fleet Management API" }
+      { url: "../spatial/syriusorbit.yaml", name: "SyriusOrbit Spatial API" },
+      { url: "../fleet-management/fleet-management.yaml", name: "SyriusOrbit Fleet Management API" }
     ],
     "urls.primaryName": selectedSpec === "fleet-management" ? "SyriusOrbit Fleet Management API" : "SyriusOrbit Spatial API",
     dom_id: '#swagger-ui',
