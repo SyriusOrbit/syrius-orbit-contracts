@@ -74,6 +74,154 @@ The Fleet Management API should stay compatible with VDA5050 at the schema and c
 
 Fleet Management may expose only a subset of these fields in a given view, but it should not rename a VDA5050 concept into a different schema name when the meaning is the same.
 
+## VDA5050 Mapping Specification
+
+This section defines the detailed mapping between VDA5050 MQTT concepts and Fleet Management HTTP API concepts.
+
+### Message Header Mapping
+
+VDA5050 MQTT messages contain common header fields. The HTTP API maps these as follows:
+
+| VDA5050 Header | HTTP API Mapping | Notes |
+|---|---|---|
+| `headerId` | Not exposed | RESTful APIs use resource IDs and version control instead of message sequence numbers |
+| `timestamp` | `lastUpdatedAt` | Represents when the data was last updated, not when it was created |
+| `version` | `protocolVersion` | Exposed for debugging and compatibility checking |
+| `manufacturer` | `manufacturer` | Preserved as a separate field |
+| `serialNumber` | `serialNumber` | Preserved and used to compose `robotId` |
+
+### Robot ID Composition
+
+`robotId` is composed using the pattern: `{manufacturer}.{serialNumber}`
+
+Example: `Syrius.SOR-Carrier-001`
+
+### Connection State Mapping
+
+The `connectionState` enumeration strictly follows the VDA5050 connection schema:
+
+- `ONLINE`: Connection between mobile robot and broker is active
+- `OFFLINE`: Connection has gone offline in a coordinated way (normal shutdown)
+- `HIBERNATING`: Connection is active but mobile robot does not send state messages (power saving mode)
+- `CONNECTION_BROKEN`: Connection has unexpectedly ended
+
+### Robot State Views
+
+#### RobotSummary (List View)
+
+Contains high-frequency query fields from VDA5050 state:
+
+| Field | Type | VDA5050 Source |
+|---|---|---|
+| `robotId` | string | Composed from manufacturer.serialNumber |
+| `displayName` | string | Management-side field |
+| `connectionState` | enum | connection.connectionState |
+| `operatingMode` | enum | state.operatingMode |
+| `driving` | boolean | state.driving |
+| `paused` | boolean | state.paused |
+| `batteryLevel` | number | state.powerSupply.stateOfCharge |
+| `charging` | boolean | state.powerSupply.charging |
+| `lastUpdatedAt` | date-time | state.timestamp |
+
+#### RobotDetail (Detail View)
+
+Contains complete VDA5050 state plus management metadata:
+
+| Field | Type | VDA5050 Source |
+|---|---|---|
+| All RobotSummary fields | - | - |
+| `manufacturer` | string | header.manufacturer |
+| `serialNumber` | string | header.serialNumber |
+| `protocolVersion` | string | header.version |
+| `currentOrderId` | string | state.orderId |
+| `currentOrderUpdateId` | integer | state.orderUpdateId |
+| `lastNodeId` | string | state.lastNodeId |
+| `lastNodeSequenceId` | integer | state.lastNodeSequenceId |
+| `mobileRobotPosition` | object | state.mobileRobotPosition (full: x, y, theta, mapId) |
+| `velocity` | object | state.velocity (vx, vy, omega) |
+| `loads[]` | array | state.loads |
+| `nodeStates[]` | array | state.nodeStates |
+| `edgeStates[]` | array | state.edgeStates |
+| `actionStates[]` | array | state.actionStates |
+| `powerSupply` | object | state.powerSupply (complete) |
+| `errors[]` | array | state.errors |
+| `information[]` | array | state.information |
+| `safetyState` | object | state.safetyState |
+| `maps[]` | array | state.maps |
+| `zoneSets[]` | array | state.zoneSets |
+
+### Order Management Metadata
+
+HTTP API adds minimal management metadata to VDA5050 order structure:
+
+| Added Field | Type | Description |
+|---|---|---|
+| `createdAt` | date-time | Order creation timestamp |
+| `status` | enum | Order status: QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELED |
+| `assignedRobotId` | string | Robot assigned to execute the order |
+
+The underlying order content (orderId, orderUpdateId, nodes, edges, actions) remains fully VDA5050-compatible.
+
+### Instant Actions
+
+Supports all VDA5050 predefined actions with extension capability:
+
+**Mandatory actions** (must be supported by every robot):
+- `cancelOrder`
+- `startPause`
+- `stopPause`
+
+**Optional predefined actions:**
+- `startHibernation`
+- `stopHibernation`
+- Other VDA5050 predefined actions as specified in the standard
+
+**Extension:** Custom actions defined by robot manufacturers are allowed and should follow the VDA5050 action schema (actionId, actionType, blockingType, actionParameters).
+
+### Factsheet
+
+The `GET /robots/{robotId}/factsheet` endpoint returns the **complete VDA5050 factsheet schema** including:
+- `typeSpecification`
+- `physicalParameters`
+- `protocolLimits`
+- `protocolFeatures`
+- `mobileRobotGeometry`
+- `loadSpecification`
+- `mobileRobotConfiguration`
+
+Data update mechanism (cache refresh, factsheetRequest trigger) is an implementation detail not specified at the API level.
+
+### Navigation Graph
+
+Navigation graph data for `GET /maps/{mapId}/navigation-graph` is sourced from the **Spatial API** (OGC API Features), not from VDA5050 order/state aggregation. This ensures consistency with the spatial data model.
+
+### Zone Type Enumeration
+
+Zone types reference the VDA5050 standard definition:
+
+- `BLOCKED`
+- `LINE_GUIDED`
+- `RELEASE`
+- `COORDINATED_REPLANNING`
+- `SPEED_LIMIT`
+- `ACTION`
+- `PRIORITY`
+- `PENALTY`
+- `DIRECTED`
+- `BIDIRECTED`
+
+### Action Status Enumeration
+
+Action statuses reference the VDA5050 standard definition:
+
+- `WAITING`
+- `INITIALIZING`
+- `RUNNING`
+- `PAUSED`
+- `RETRIABLE`
+- `FINISHED`
+- `FAILED`
+
 ## Design Direction
 
 The next design step is to translate these requirements into a resource model and API structure:
