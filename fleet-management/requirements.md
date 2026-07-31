@@ -255,7 +255,7 @@ This is a rough path design based on the current requirements. It is intentional
 
 ### Instant action paths
 
-- `POST /instant-actions` - trigger an instant action such as `cancelOrder` or `factsheetRequest`
+- `POST /robots/{robotId}/instant-actions` - trigger an instant action such as `cancelOrder` or `factsheetRequest`
 - `GET /robots/{robotId}/instant-actions` - list instant actions for a robot state view, if history is exposed
 - `GET /robots/{robotId}/instant-actions/{instantActionId}` - get instant action detail from the robot state view, if needed
 
@@ -287,6 +287,6 @@ This is a rough path design based on the current requirements. It is intentional
 - `factsheet` is modeled as a robot-related view, not as a standalone primary resource.
 - `factsheet` follows VDA5050 factsheet communication semantics and is exposed here as a management view only.
 - `navigation graph` and `zone` are treated as map sub-resources.
-- `instantAction` is modeled as a top-level command resource. Any history exposed under `robot` should be treated as a robot state view.
+- `instantAction` is robot-scoped and triggered via `POST /robots/{robotId}/instant-actions`. Any history exposed under `robot` is treated as a robot state view.
 - `orders` are created and managed in this API using VDA5050-aligned order concepts. Execution and robot-side lifecycle remain in Fleet Control.
 - This outline keeps the first version focused on management views and order submission, with control actions separated from robot-side execution behavior.
