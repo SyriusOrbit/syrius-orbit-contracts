@@ -1336,11 +1336,14 @@ components:
     FactsheetView:
       type: object
       description: |-
-        Management view of the VDA 5050 factsheet. VDA 5050 MQTT header
-        fields (`headerId`, `timestamp`, `version`, `manufacturer`,
-        `serialNumber`) are not surfaced; `lastUpdatedAt` provides the cache
-        freshness timestamp.
+        Management view of the VDA 5050 factsheet. VDA 5050 MQTT transport
+        header fields (`headerId`, `timestamp`, `version`) are not surfaced;
+        `lastUpdatedAt` provides the cache freshness timestamp. The robot
+        identity fields `manufacturer` and `serialNumber` are preserved per
+        the VDA 5050 factsheet schema.
       required:
+        - manufacturer
+        - serialNumber
         - typeSpecification
         - physicalParameters
         - protocolLimits
@@ -1349,6 +1352,12 @@ components:
         - loadSpecification
         - lastUpdatedAt
       properties:
+        manufacturer:
+          type: string
+          description: Manufacturer of the mobile robot, preserved from the VDA 5050 factsheet.
+        serialNumber:
+          type: string
+          description: Serial number of the mobile robot, preserved from the VDA 5050 factsheet.
         typeSpecification:
           $ref: '#/components/schemas/TypeSpecification'
         physicalParameters:
@@ -2117,7 +2126,10 @@ components:
           $ref: '#/components/schemas/NodePosition'
         actions:
           type: array
-          description: Actions to be executed on the node.
+          description: |-
+            Actions to be executed on the node. Per the VDA 5050 order schema,
+            each action must include an `actionId` (caller-provided, suggested
+            format: UUID).
           items:
             $ref: '#/components/schemas/Action'
 
@@ -2185,7 +2197,10 @@ components:
           $ref: '#/components/schemas/Corridor'
         actions:
           type: array
-          description: Actions to be executed on the edge.
+          description: |-
+            Actions to be executed on the edge. Per the VDA 5050 order schema,
+            each action must include an `actionId` (caller-provided, suggested
+            format: UUID).
           items:
             $ref: '#/components/schemas/Action'
 
@@ -2396,7 +2411,14 @@ components:
         actionDescriptor:
           type: string
         blockingType:
-          $ref: '#/components/schemas/BlockingType'
+          type: string
+          description: |-
+            Blocking type of the instant action. Following the VDA 5050
+            instantActions schema, the blocking type of an instant action is
+            always `NONE`: the action can happen in parallel with others,
+            including movement.
+          enum:
+            - NONE
         actionParameters:
           type: array
           items:
@@ -2425,7 +2447,13 @@ components:
         actionDescriptor:
           type: string
         blockingType:
-          $ref: '#/components/schemas/BlockingType'
+          type: string
+          description: |-
+            Blocking type of the instant action. Following the VDA 5050
+            instantActions schema, the blocking type of an instant action is
+            always `NONE`.
+          enum:
+            - NONE
         actionParameters:
           type: array
           items:
@@ -2576,6 +2604,19 @@ components:
         `direction`, `directedLimitation`, `bidirectedLimitation`) are
         modeled as optional and are not enforced with `if/then` constraints at
         the contract level.
+
+        Per the VDA 5050 zoneSet schema, the following fields are required
+        depending on `zoneType`:
+        - `RELEASE`: `releaseLossBehavior`
+        - `SPEED_LIMIT`: `maximumSpeed`
+        - `ACTION`: `entryActions`, `duringActions`, `exitActions`
+        - `PRIORITY`: `priorityFactor`
+        - `PENALTY`: `penaltyFactor`
+        - `DIRECTED`: `direction`, `directedLimitation`
+        - `BIDIRECTED`: `direction`, `bidirectedLimitation`
+
+        Clients and servers should enforce these requirements at the
+        application layer.
       required:
         - zoneId
         - zoneType

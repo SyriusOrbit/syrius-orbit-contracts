@@ -133,8 +133,8 @@ Contains complete VDA5050 state plus management metadata:
 | `manufacturer` | string | header.manufacturer |
 | `serialNumber` | string | header.serialNumber |
 | `protocolVersion` | string | header.version |
-| `currentOrderId` | string | state.orderId |
-| `currentOrderUpdateId` | integer | state.orderUpdateId |
+| `orderId` | string | state.orderId |
+| `orderUpdateId` | integer | state.orderUpdateId |
 | `lastNodeId` | string | state.lastNodeId |
 | `lastNodeSequenceId` | integer | state.lastNodeSequenceId |
 | `mobileRobotPosition` | object | state.mobileRobotPosition (full: x, y, theta, mapId) |
@@ -194,6 +194,8 @@ Data update mechanism (cache refresh, factsheetRequest trigger) is an implementa
 ### Navigation Graph
 
 Navigation graph data for `GET /maps/{mapId}/navigation-graph` is sourced from the **Spatial API** (OGC API Features), not from VDA5050 order/state aggregation. This ensures consistency with the spatial data model.
+
+Node and edge fields stay aligned with VDA 5050 order and state terminology where the same geometry concept is represented. Shared field names (such as `nodeId`, `edgeId`, `nodeDescriptor`, `orientation`, `orientationType`, `length`, `maximumSpeed`) match VDA 5050 exactly. However, VDA 5050 order-only dynamic fields (`sequenceId`, `released`) are omitted because they describe execution state, not static graph topology. Conversely, graph-structure fields (`startNodeId`, `endNodeId`) are added because they are required to express edge connectivity in a static navigation graph.
 
 ### Zone Type Enumeration
 
