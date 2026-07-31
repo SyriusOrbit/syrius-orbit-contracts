@@ -1,11 +1,23 @@
 openapi: 3.0.3
 info:
   title: SyriusOrbit Fleet Management API
-  version: 0.1.0
+  version: 0.1.1
   description: |-
-    Draft OpenAPI definition of the SyriusOrbit Fleet Management API.
-    This demo contract introduces the intended HTTP management surface for
-    fleet resources consumed by frontends and related systems.
+    OpenAPI definition of the SyriusOrbit Fleet Management API.
+
+    This contract defines the HTTP management surface for fleet operators and
+    frontend operators. It exposes near-real-time operational visibility, order
+    submission, and predefined instant action control, while execution and
+    state propagation remain in the Fleet Control API.
+
+    Schema and concept compatibility follows VDA 5050 wherever the same
+    business object is represented. VDA 5050 MQTT header fields are not
+    surfaced on HTTP resources. Robot state views reuse VDA 5050 state field
+    names, order payloads reuse the VDA 5050 order shape, and instant actions
+    reuse the VDA 5050 action object.
+
+    See `requirements.md` for the full requirement and VDA 5050 mapping
+    specification that drives this contract.
   contact:
     name: SyriusOrbit Maintainers
     url: https://github.com/SyriusOrbit/syrius-orbit-contracts
@@ -14,12 +26,21 @@ info:
     url: https://opensource.org/licenses/MIT
 servers:
   - url: /
+    description: |-
+      Single server entry point. The local edge Daemon and the cloud services
+      expose fully consistent interfaces. Transport security differences
+      (edge: no TLS, cloud: TLS 1.3 + mTLS + OAuth2 JWT) are handled by the
+      runtime, not by this contract.
 security: []
 tags:
   - name: Robots
-    description: Fleet robot inventory and live summaries.
-  - name: Tasks
-    description: Fleet task monitoring resources.
+    description: Fleet robot inventory, live summaries, factsheet, and instant action control.
+  - name: Orders
+    description: VDA 5050-aligned order submission, monitoring, and detail views.
+  - name: Maps
+    description: Map, navigation graph, and zone resources used for fleet visualization.
+  - name: InstantActions
+    description: Robot-scoped instant action execution and history.
   - name: Fleet
     description: Fleet-wide operational overview resources.
 paths:
@@ -28,7 +49,7 @@ paths:
       tags:
         - Robots
       summary: List robots.
-      description: Retrieve a draft list of robots currently known to the fleet management plane.
+      description: Retrieve the full list of robots currently known to the fleet management plane. This endpoint always returns the complete list and does not support pagination.
       operationId: listRobots
       responses:
         '200':
@@ -41,18 +62,24 @@ paths:
                 sample:
                   value:
                     robots:
-                      - robotId: amr-001
-                        displayName: AMR 001
+                      - robotId: Syrius.SOR-Carrier-001
+                        displayName: Carrier 001
                         connectionState: ONLINE
                         operatingMode: AUTOMATIC
+                        driving: false
+                        paused: false
                         batteryLevel: 87.5
-                        lastSeenAt: '2026-07-29T09:30:00Z'
-                      - robotId: amr-002
-                        displayName: AMR 002
+                        charging: false
+                        lastUpdatedAt: '2026-07-29T09:30:00Z'
+                      - robotId: Syrius.SOR-Carrier-002
+                        displayName: Carrier 002
                         connectionState: OFFLINE
                         operatingMode: MANUAL
+                        driving: false
+                        paused: false
                         batteryLevel: 41.0
-                        lastSeenAt: '2026-07-29T09:18:00Z'
+                        charging: false
+                        lastUpdatedAt: '2026-07-29T09:18:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -65,7 +92,7 @@ paths:
       tags:
         - Robots
       summary: Get a robot.
-      description: Retrieve a draft detail view for a single robot resource.
+      description: Retrieve the detail view for a single robot resource, including the complete VDA 5050 state fields plus management metadata.
       operationId: getRobot
       parameters:
         - $ref: '#/components/parameters/robotId'
@@ -76,19 +103,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RobotDetail'
-              examples:
-                sample:
-                  value:
-                    robotId: amr-001
-                    displayName: AMR 001
-                    manufacturer: Syrius Robotics
-                    model: SOR-Carrier
-                    connectionState: ONLINE
-                    operatingMode: AUTOMATIC
-                    batteryLevel: 87.5
-                    currentTaskId: task-1024
-                    factsheetAvailable: true
-                    lastSeenAt: '2026-07-29T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -96,32 +110,360 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /tasks:
+  /robots/{robotId}/factsheet:
     get:
       tags:
-        - Tasks
-      summary: List tasks.
-      description: Retrieve a draft list of tasks tracked by the fleet management plane.
-      operationId: listTasks
+        - Robots
+      summary: Get robot factsheet.
+      description: |-
+        Retrieve the cached VDA 5050 factsheet for a robot. The factsheet is
+        communicated by the mobile robot after a `factsheetRequest` instant
+        action is triggered. This endpoint only returns cached data and does
+        not trigger a factsheet refresh itself.
+
+        When no cached factsheet is available, the endpoint returns `404` with
+        a Problem Details body whose `detail` advises the caller to trigger a
+        `factsheetRequest` instant action via
+        `POST /robots/{robotId}/instant-actions` and retry later.
+      operationId: getRobotFactsheet
+      parameters:
+        - $ref: '#/components/parameters/robotId'
       responses:
         '200':
-          description: Task list returned.
+          description: Cached factsheet returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskList'
+                $ref: '#/components/schemas/FactsheetView'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: No cached factsheet is available for the robot.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
               examples:
                 sample:
                   value:
-                    tasks:
-                      - taskId: task-1024
-                        status: RUNNING
-                        assignedRobotId: amr-001
-                        createdAt: '2026-07-29T09:00:00Z'
-                      - taskId: task-1025
-                        status: QUEUED
-                        assignedRobotId: null
-                        createdAt: '2026-07-29T09:12:00Z'
+                    type: 'https://syriusorbit.example/errors/factsheet-not-cached'
+                    title: Factsheet not cached
+                    status: 404
+                    detail: No cached factsheet is available. Trigger a factsheetRequest instant action and retry.
+                    instance: 'https://api.syriusorbit.example/robots/Syrius.SOR-Carrier-001/factsheet'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /robots/{robotId}/instant-actions:
+    get:
+      tags:
+        - InstantActions
+      summary: List instant actions for a robot.
+      description: Retrieve a paginated, filterable history of instant actions triggered for a robot, as exposed through the robot state view.
+      operationId: listRobotInstantActions
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/actionTypeFilter'
+        - $ref: '#/components/parameters/actionStatusFilter'
+        - $ref: '#/components/parameters/lastUpdatedAtFrom'
+        - $ref: '#/components/parameters/lastUpdatedAtTo'
+      responses:
+        '200':
+          description: Instant action list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantActionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - InstantActions
+      summary: Trigger an instant action for a robot.
+      description: |-
+        Trigger a single VDA 5050 instant action for the targeted robot. The
+        request body carries a single action object without `actionId`; the
+        server generates `actionId` and returns the persisted instant action
+        with `actionStatus` set to its initial state.
+
+        Predefined actions include `cancelOrder`, `startPause`, `stopPause`,
+        `startHibernation`, `stopHibernation`, and `factsheetRequest`.
+        Manufacturer-specific actions follow the same action schema.
+      operationId: createRobotInstantAction
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstantActionCreateRequest'
+            examples:
+              cancelOrder:
+                value:
+                  actionType: cancelOrder
+                  blockingType: NONE
+              factsheetRequest:
+                value:
+                  actionType: factsheetRequest
+                  blockingType: NONE
+      responses:
+        '201':
+          description: Instant action created.
+          headers:
+            Location:
+              description: URL of the created instant action resource.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantAction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /robots/{robotId}/instant-actions/{instantActionId}:
+    get:
+      tags:
+        - InstantActions
+      summary: Get an instant action for a robot.
+      description: Retrieve the detail of a single instant action from the robot state view.
+      operationId: getRobotInstantAction
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+        - $ref: '#/components/parameters/instantActionId'
+      responses:
+        '200':
+          description: Instant action detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantAction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: List orders.
+      description: Retrieve a paginated, filterable list of orders tracked by the fleet management plane.
+      operationId: listOrders
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/orderStatusFilter'
+        - $ref: '#/components/parameters/assignedRobotIdFilter'
+        - $ref: '#/components/parameters/createdAtFrom'
+        - $ref: '#/components/parameters/createdAtTo'
+      responses:
+        '200':
+          description: Order list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Orders
+      summary: Create an order.
+      description: |-
+        Submit a new VDA 5050-aligned order for management-side creation. The
+        request body carries the VDA 5050 order content
+        (`nodes`, `edges`, `actions`, optional `orderDescription`) plus the
+        management metadata `assignedRobotId`.
+
+        The server injects `orderId` and `orderUpdateId` set to `0` for a new
+        order, following the VDA 5050 convention. VDA 5050 MQTT header fields
+        (`headerId`, `timestamp`, `version`, `manufacturer`, `serialNumber`)
+        are not part of the HTTP request body and are populated by the Fleet
+        Control API when the order is dispatched to the robot.
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '201':
+          description: Order created.
+          headers:
+            Location:
+              description: URL of the created order resource.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get an order.
+      description: Retrieve the detail view for a single order, including the complete VDA 5050 order content plus management metadata.
+      operationId: getOrder
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        '200':
+          description: Order detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maps:
+    get:
+      tags:
+        - Maps
+      summary: List maps.
+      description: Retrieve the full list of maps known to the fleet management plane. This endpoint always returns the complete list and does not support pagination.
+      operationId: listMaps
+      responses:
+        '200':
+          description: Map list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maps/{mapId}:
+    get:
+      tags:
+        - Maps
+      summary: Get a map.
+      description: Retrieve the detail view for a single map resource.
+      operationId: getMap
+      parameters:
+        - $ref: '#/components/parameters/mapId'
+      responses:
+        '200':
+          description: Map detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maps/{mapId}/navigation-graph:
+    get:
+      tags:
+        - Maps
+      summary: Get the navigation graph of a map.
+      description: |-
+        Retrieve the navigation graph part of a map. The navigation graph data
+        is sourced from the Spatial API (OGC API Features), not from VDA 5050
+        order or state aggregation. Node and edge fields stay aligned with
+        VDA 5050 order and state terminology where the same geometry concept is
+        represented.
+      operationId: getMapNavigationGraph
+      parameters:
+        - $ref: '#/components/parameters/mapId'
+      responses:
+        '200':
+          description: Navigation graph returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationGraph'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maps/{mapId}/zones:
+    get:
+      tags:
+        - Maps
+      summary: List zones under a map.
+      description: Retrieve a paginated, filterable list of zones under a map.
+      operationId: listMapZones
+      parameters:
+        - $ref: '#/components/parameters/mapId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/zoneTypeFilter'
+      responses:
+        '200':
+          description: Zone list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maps/{mapId}/zones/{zoneId}:
+    get:
+      tags:
+        - Maps
+      summary: Get a zone under a map.
+      description: Retrieve the detail view for a single zone under a map.
+      operationId: getMapZone
+      parameters:
+        - $ref: '#/components/parameters/mapId'
+        - $ref: '#/components/parameters/zoneId'
+      responses:
+        '200':
+          description: Zone detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -134,7 +476,7 @@ paths:
       tags:
         - Fleet
       summary: Get fleet overview.
-      description: Retrieve a draft aggregated overview of the fleet.
+      description: Retrieve an aggregated overview of the fleet.
       operationId: getFleetOverview
       responses:
         '200':
@@ -148,8 +490,8 @@ paths:
                   value:
                     robotCount: 12
                     onlineRobotCount: 10
-                    activeTaskCount: 7
-                    queuedTaskCount: 5
+                    activeOrderCount: 7
+                    queuedOrderCount: 5
                     updatedAt: '2026-07-29T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -157,47 +499,280 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
 components:
   parameters:
     robotId:
       name: robotId
       in: path
       required: true
-      description: Unique robot identifier.
+      description: Unique robot identifier, composed as `{manufacturer}.{serialNumber}` (for example `Syrius.SOR-Carrier-001`).
       schema:
         type: string
+    orderId:
+      name: orderId
+      in: path
+      required: true
+      description: Unique order identifier.
+      schema:
+        type: string
+    mapId:
+      name: mapId
+      in: path
+      required: true
+      description: Unique map identifier.
+      schema:
+        type: string
+    zoneId:
+      name: zoneId
+      in: path
+      required: true
+      description: Locally unique zone identifier within the map.
+      schema:
+        type: string
+    instantActionId:
+      name: instantActionId
+      in: path
+      required: true
+      description: Unique instant action identifier.
+      schema:
+        type: string
+    page:
+      name: page
+      in: query
+      required: false
+      description: Zero-based page index. Defaults to `0`.
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    pageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of items per page. Defaults to `20`.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+        default: 20
+    orderStatusFilter:
+      name: status
+      in: query
+      required: false
+      description: Filter orders by management status.
+      schema:
+        $ref: '#/components/schemas/OrderStatus'
+    assignedRobotIdFilter:
+      name: assignedRobotId
+      in: query
+      required: false
+      description: Filter orders by assigned robot identifier.
+      schema:
+        type: string
+    createdAtFrom:
+      name: createdAtFrom
+      in: query
+      required: false
+      description: Inclusive lower bound for order creation time.
+      schema:
+        type: string
+        format: date-time
+    createdAtTo:
+      name: createdAtTo
+      in: query
+      required: false
+      description: Inclusive upper bound for order creation time.
+      schema:
+        type: string
+        format: date-time
+    zoneTypeFilter:
+      name: zoneType
+      in: query
+      required: false
+      description: Filter zones by zone type.
+      schema:
+        $ref: '#/components/schemas/ZoneType'
+    actionTypeFilter:
+      name: actionType
+      in: query
+      required: false
+      description: Filter instant actions by action type.
+      schema:
+        type: string
+    actionStatusFilter:
+      name: actionStatus
+      in: query
+      required: false
+      description: Filter instant actions by action status.
+      schema:
+        $ref: '#/components/schemas/ActionStatus'
+    lastUpdatedAtFrom:
+      name: lastUpdatedAtFrom
+      in: query
+      required: false
+      description: Inclusive lower bound for instant action last update time.
+      schema:
+        type: string
+        format: date-time
+    lastUpdatedAtTo:
+      name: lastUpdatedAtTo
+      in: query
+      required: false
+      description: Inclusive upper bound for instant action last update time.
+      schema:
+        type: string
+        format: date-time
+
   responses:
     BadRequest:
       description: The request is invalid.
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     NotFound:
       description: The requested resource was not found.
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     InternalServerError:
       description: The server failed to process the request.
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+
   schemas:
     Problem:
       type: object
+      description: RFC 7807 Problem Details object.
       required:
-        - code
-        - message
+        - title
+        - status
       properties:
-        code:
+        type:
           type: string
-          example: BAD_REQUEST
-        message:
+          format: uri
+          description: URI identifying the problem type.
+        title:
           type: string
-          example: The request parameters are invalid.
+          description: Short human-readable summary of the problem.
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code generated by the origin server.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          format: uri
+          description: URI identifying the specific occurrence of the problem.
+
+    Pagination:
+      type: object
+      description: Pagination metadata for collection responses.
+      required:
+        - page
+        - pageSize
+        - total
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        pageSize:
+          type: integer
+          format: int32
+          minimum: 1
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+
+    ConnectionState:
+      type: string
+      description: Connection state between mobile robot and broker, following the VDA 5050 connection schema.
+      enum:
+        - ONLINE
+        - OFFLINE
+        - HIBERNATING
+        - CONNECTION_BROKEN
+
+    OperatingMode:
+      type: string
+      description: Current operating mode of the mobile robot, following the VDA 5050 state schema.
+      enum:
+        - STARTUP
+        - AUTOMATIC
+        - SEMIAUTOMATIC
+        - INTERVENED
+        - MANUAL
+        - SERVICE
+        - TEACH_IN
+
+    OrderStatus:
+      type: string
+      description: Management-side order status. Conversion timing between states is implementation-defined.
+      enum:
+        - QUEUED
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - CANCELED
+
+    ActionStatus:
+      type: string
+      description: Action status, following the VDA 5050 action state schema.
+      enum:
+        - WAITING
+        - INITIALIZING
+        - RUNNING
+        - PAUSED
+        - RETRIABLE
+        - FINISHED
+        - FAILED
+
+    BlockingType:
+      type: string
+      description: |-
+        Regulates whether the action is allowed to execute during movement
+        and/or parallel to other actions. Follows the VDA 5050 action schema.
+        `NONE`: allows driving and other actions; `SINGLE`: allows driving but
+        no other actions; `SOFT`: allows other actions but not driving;
+        `HARD`: is the only allowed action at that time.
+      enum:
+        - NONE
+        - SOFT
+        - SINGLE
+        - HARD
+
+    ZoneType:
+      type: string
+      description: Zone category, following the VDA 5050 zone set schema.
+      enum:
+        - BLOCKED
+        - LINE_GUIDED
+        - RELEASE
+        - COORDINATED_REPLANNING
+        - SPEED_LIMIT
+        - ACTION
+        - PRIORITY
+        - PENALTY
+        - DIRECTED
+        - BIDIRECTED
+
+    MapStatus:
+      type: string
+      description: Status of a map version on the mobile robot, following the VDA 5050 map schema.
+      enum:
+        - ENABLED
+        - DISABLED
+
     RobotList:
       type: object
       required:
@@ -207,113 +782,1898 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RobotSummary'
+
     RobotSummary:
       type: object
+      description: High-frequency query fields for a robot, projected from the VDA 5050 state.
       required:
         - robotId
         - displayName
         - connectionState
         - operatingMode
+        - driving
+        - paused
         - batteryLevel
-        - lastSeenAt
+        - charging
+        - lastUpdatedAt
       properties:
         robotId:
           type: string
-          example: amr-001
+          description: Robot identifier composed as `{manufacturer}.{serialNumber}`.
+          example: Syrius.SOR-Carrier-001
         displayName:
           type: string
-          example: AMR 001
+          description: Management-side display name.
+          example: Carrier 001
         connectionState:
-          type: string
-          enum:
-            - ONLINE
-            - OFFLINE
-            - HIBERNATING
-            - CONNECTION_BROKEN
+          $ref: '#/components/schemas/ConnectionState'
         operatingMode:
-          type: string
-          enum:
-            - STARTUP
-            - AUTOMATIC
-            - SEMIAUTOMATIC
-            - INTERVENED
-            - MANUAL
-            - SERVICE
-            - TEACH_IN
+          $ref: '#/components/schemas/OperatingMode'
+        driving:
+          type: boolean
+          description: True if the mobile robot is driving and/or rotating.
+        paused:
+          type: boolean
+          description: True if the mobile robot is currently in a paused state.
         batteryLevel:
           type: number
           format: float
           minimum: 0
           maximum: 100
+          description: Battery state of charge in percent, sourced from `state.powerSupply.stateOfCharge`.
           example: 87.5
-        lastSeenAt:
+        charging:
+          type: boolean
+          description: True if charging is in progress, sourced from `state.powerSupply.charging`.
+        lastUpdatedAt:
           type: string
           format: date-time
+          description: Time the data was last updated, sourced from the VDA 5050 state `timestamp`.
           example: '2026-07-29T09:30:00Z'
+
     RobotDetail:
       allOf:
         - $ref: '#/components/schemas/RobotSummary'
         - type: object
           required:
             - manufacturer
-            - model
-            - factsheetAvailable
+            - serialNumber
+            - protocolVersion
+            - orderId
+            - orderUpdateId
+            - lastNodeId
+            - lastNodeSequenceId
+            - nodeStates
+            - edgeStates
+            - actionStates
+            - instantActionStates
+            - powerSupply
+            - safetyState
           properties:
             manufacturer:
               type: string
-              example: Syrius Robotics
-            model:
+              description: Manufacturer of the mobile robot, sourced from the VDA 5050 message header.
+              example: Syrius
+            serialNumber:
               type: string
-              example: SOR-Carrier
-            currentTaskId:
+              description: Serial number of the mobile robot, sourced from the VDA 5050 message header.
+              example: SOR-Carrier-001
+            protocolVersion:
               type: string
-              nullable: true
-              example: task-1024
-            factsheetAvailable:
-              type: boolean
-              example: true
-    TaskList:
+              description: VDA 5050 protocol version, sourced from the VDA 5050 message header `version`.
+              example: 2.0.0
+            orderId:
+              type: string
+              description: Identifier of the current order or the previous finished order, sourced from `state.orderId`. Empty string if no previous orderId is available.
+              example: order-2026-0001
+            orderUpdateId:
+              type: integer
+              format: int64
+              minimum: 0
+              description: Order update identification of the currently accepted order, sourced from `state.orderUpdateId`. `0` if no previous orderUpdateId is available.
+              example: 3
+            lastNodeId:
+              type: string
+              description: Node identifier of the last reached node or the current node, sourced from `state.lastNodeId`. Empty string if no lastNodeId is available.
+              example: Node-7
+            lastNodeSequenceId:
+              type: integer
+              format: int64
+              minimum: 0
+              description: Sequence identifier of the last reached node, sourced from `state.lastNodeSequenceId`.
+              example: 7
+            mobileRobotPosition:
+              $ref: '#/components/schemas/MobileRobotPosition'
+            velocity:
+              $ref: '#/components/schemas/Velocity'
+            loads:
+              type: array
+              description: Loads currently handled by the mobile robot, sourced from `state.loads`.
+              items:
+                $ref: '#/components/schemas/Load'
+            nodeStates:
+              type: array
+              description: Node states that need to be traversed for fulfilling the order, sourced from `state.nodeStates`.
+              items:
+                $ref: '#/components/schemas/NodeState'
+            edgeStates:
+              type: array
+              description: Edge states that need to be traversed for fulfilling the order, sourced from `state.edgeStates`.
+              items:
+                $ref: '#/components/schemas/EdgeState'
+            actionStates:
+              type: array
+              description: Current and pending actions, sourced from `state.actionStates`.
+              items:
+                $ref: '#/components/schemas/ActionState'
+            instantActionStates:
+              type: array
+              description: Instant action states received by the mobile robot, sourced from `state.instantActionStates`.
+              items:
+                $ref: '#/components/schemas/ActionState'
+            zoneActionStates:
+              type: array
+              description: Zone action states in an end state or currently running, sourced from `state.zoneActionStates`.
+              items:
+                $ref: '#/components/schemas/ActionState'
+            powerSupply:
+              $ref: '#/components/schemas/PowerSupply'
+            errors:
+              type: array
+              description: Active errors of the mobile robot, sourced from `state.errors`.
+              items:
+                $ref: '#/components/schemas/Error'
+            information:
+              type: array
+              description: Information messages from the mobile robot, sourced from `state.information`.
+              items:
+                $ref: '#/components/schemas/Information'
+            safetyState:
+              $ref: '#/components/schemas/SafetyState'
+            maps:
+              type: array
+              description: Maps currently stored on the mobile robot, sourced from `state.maps`.
+              items:
+                $ref: '#/components/schemas/MapSummary'
+            zoneSets:
+              type: array
+              description: Zone sets currently stored on the mobile robot, sourced from `state.zoneSets`.
+              items:
+                $ref: '#/components/schemas/ZoneSetSummary'
+
+    MobileRobotPosition:
       type: object
+      description: Position on a map in world coordinates, following the VDA 5050 state schema.
       required:
-        - tasks
+        - x
+        - y
+        - theta
+        - mapId
+        - localized
       properties:
-        tasks:
+        x:
+          type: number
+          format: double
+          description: X coordinate in meters.
+        y:
+          type: number
+          format: double
+          description: Y coordinate in meters.
+        theta:
+          type: number
+          format: double
+          minimum: -3.14159265359
+          maximum: 3.14159265359
+          description: Orientation in radians.
+        mapId:
+          type: string
+          description: Unique identification of the map.
+        localized:
+          type: boolean
+          description: True if the mobile robot is localized and x, y, theta can be trusted.
+        localizationScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Quality of the localization, optional for vehicles that cannot estimate it.
+        deviationRange:
+          type: number
+          format: float
+          minimum: 0
+          description: Position deviation range in meters, optional.
+
+    Velocity:
+      type: object
+      description: Mobile robot velocity in mobile robot coordinates, following the VDA 5050 state schema.
+      properties:
+        vx:
+          type: number
+          format: double
+          description: Velocity in the x direction in meters per second.
+        vy:
+          type: number
+          format: double
+          description: Velocity in the y direction in meters per second.
+        omega:
+          type: number
+          format: double
+          description: Turning speed around the z axis in radians per second.
+
+    Load:
+      type: object
+      description: Load currently handled by the mobile robot, following the VDA 5050 state schema.
+      properties:
+        loadId:
+          type: string
+          description: Unique identification number of the load.
+        loadType:
+          type: string
+          description: Type of load.
+        loadPosition:
+          type: string
+          description: Load handling/carrying unit of the mobile robot used for this load.
+        boundingBoxReference:
+          type: object
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x:
+              type: number
+              format: double
+            y:
+              type: number
+              format: double
+            z:
+              type: number
+              format: double
+            theta:
+              type: number
+              format: double
+              description: Orientation of the load bounding box, important for tugger trains.
+        loadDimensions:
+          type: object
+          required:
+            - length
+            - width
+          properties:
+            length:
+              type: number
+              format: double
+              minimum: 0
+              description: Absolute length in meters.
+            width:
+              type: number
+              format: double
+              minimum: 0
+              description: Absolute width in meters.
+            height:
+              type: number
+              format: double
+              minimum: 0
+              description: Absolute height in meters, optional.
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          description: Absolute weight of the load in kilograms.
+
+    NodeState:
+      type: object
+      description: Node state within the current order, following the VDA 5050 state schema.
+      required:
+        - nodeId
+        - sequenceId
+        - released
+      properties:
+        nodeId:
+          type: string
+        sequenceId:
+          type: integer
+          format: int64
+          minimum: 0
+        nodeDescriptor:
+          type: string
+        released:
+          type: boolean
+          description: True if the node is part of the base, false if part of the horizon.
+        nodePosition:
+          type: object
+          required:
+            - x
+            - y
+            - mapId
+          properties:
+            x:
+              type: number
+              format: double
+            y:
+              type: number
+              format: double
+            theta:
+              type: number
+              format: double
+              minimum: -3.14159265359
+              maximum: 3.14159265359
+            mapId:
+              type: string
+
+    EdgeState:
+      type: object
+      description: Edge state within the current order, following the VDA 5050 state schema.
+      required:
+        - edgeId
+        - sequenceId
+        - released
+      properties:
+        edgeId:
+          type: string
+        sequenceId:
+          type: integer
+          format: int64
+          minimum: 0
+        edgeDescriptor:
+          type: string
+        released:
+          type: boolean
+          description: True if the edge is part of the base, false if part of the horizon.
+        trajectory:
+          $ref: '#/components/schemas/Trajectory'
+
+    ActionState:
+      type: object
+      description: State of an action, following the VDA 5050 action state schema.
+      required:
+        - actionId
+        - actionStatus
+      properties:
+        actionId:
+          type: string
+          description: Unique action identifier.
+        actionType:
+          type: string
+          description: Action type, optional, only for informational or visualization purposes.
+        actionDescriptor:
+          type: string
+        actionStatus:
+          $ref: '#/components/schemas/ActionStatus'
+        actionResult:
+          type: string
+          description: Description of the result, errors are transmitted in `errors`.
+
+    PowerSupply:
+      type: object
+      description: Battery-related information, following the VDA 5050 state schema.
+      required:
+        - stateOfCharge
+        - charging
+      properties:
+        stateOfCharge:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: State of charge in percent.
+        batteryVoltage:
+          type: number
+          format: double
+          description: Battery voltage.
+        batteryCurrent:
+          type: number
+          format: double
+          description: Battery current in amperes.
+        batteryHealth:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: State of health in percent.
+        charging:
+          type: boolean
+          description: True if charging is in progress.
+        range:
+          type: number
+          format: double
+          minimum: 0
+          description: Estimated reach with current state of charge in meters.
+
+    Error:
+      type: object
+      description: Active error of the mobile robot, following the VDA 5050 state schema.
+      required:
+        - errorType
+        - errorLevel
+      properties:
+        errorType:
+          type: string
+          description: Error type, extensible enumeration.
+        errorReferences:
           type: array
           items:
-            $ref: '#/components/schemas/TaskSummary'
-    TaskSummary:
+            type: object
+            required:
+              - referenceKey
+              - referenceValue
+            properties:
+              referenceKey:
+                type: string
+                description: Type of reference (for example nodeId, edgeId, orderId, actionId).
+              referenceValue:
+                type: string
+                description: Value belonging to the reference key.
+        errorDescription:
+          type: string
+        errorDescriptionTranslations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Translation'
+        errorHint:
+          type: string
+        errorHintTranslations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Translation'
+        errorLevel:
+          type: string
+          description: |-
+            Error level. `WARNING`: no immediate attention required;
+            `URGENT`: immediate attention required, mobile robot can continue;
+            `CRITICAL`: immediate attention required, mobile robot cannot
+            continue the active order; `FATAL`: user intervention is required,
+            mobile robot cannot continue or accept new orders.
+          enum:
+            - WARNING
+            - URGENT
+            - CRITICAL
+            - FATAL
+
+    Translation:
+      type: object
+      description: Translation of a text for a given language code.
+      required:
+        - translationKey
+        - translationValue
+      properties:
+        translationKey:
+          type: string
+          description: Language code according to ISO 639-1.
+        translationValue:
+          type: string
+
+    Information:
+      type: object
+      description: Information message from the mobile robot, following the VDA 5050 state schema.
+      required:
+        - infoType
+        - infoLevel
+      properties:
+        infoType:
+          type: string
+          description: Type or name of the information.
+        infoReferences:
+          type: array
+          items:
+            type: object
+            required:
+              - referenceKey
+              - referenceValue
+            properties:
+              referenceKey:
+                type: string
+              referenceValue:
+                type: string
+        infoDescriptor:
+          type: string
+        infoLevel:
+          type: string
+          description: Information level. `DEBUG` for debugging, `INFO` for visualization.
+          enum:
+            - INFO
+            - DEBUG
+
+    SafetyState:
+      type: object
+      description: Safety-related information, following the VDA 5050 state schema.
+      required:
+        - activeEmergencyStop
+        - fieldViolation
+      properties:
+        activeEmergencyStop:
+          type: string
+          description: |-
+            Emergency stop type. `MANUAL`: e-stop to be acknowledged manually at
+            the mobile robot; `REMOTE`: facility e-stop to be acknowledged
+            remotely; `NONE`: no e-stop activated.
+          enum:
+            - MANUAL
+            - REMOTE
+            - NONE
+        fieldViolation:
+          type: boolean
+          description: True if the protective field is violated.
+
+    MapSummary:
+      type: object
+      description: Map stored on the mobile robot, following the VDA 5050 state map schema.
+      required:
+        - mapId
+        - mapVersion
+        - mapStatus
+      properties:
+        mapId:
+          type: string
+        mapVersion:
+          type: string
+        mapDescriptor:
+          type: string
+          description: User-defined, human-readable name or descriptor.
+        mapStatus:
+          $ref: '#/components/schemas/MapStatus'
+
+    ZoneSetSummary:
+      type: object
+      description: Zone set stored on the mobile robot, following the VDA 5050 state zoneSet schema.
+      required:
+        - zoneSetId
+        - mapId
+        - zoneSetStatus
+      properties:
+        zoneSetId:
+          type: string
+          description: Unique identifier of the zone set. May be empty if the robot has no zones defined for the map.
+        mapId:
+          type: string
+          description: Identifier of the corresponding map.
+        zoneSetStatus:
+          type: string
+          description: Status of the zone set on the mobile robot.
+          enum:
+            - ENABLED
+            - DISABLED
+
+    FactsheetView:
+      type: object
+      description: |-
+        Management view of the VDA 5050 factsheet. VDA 5050 MQTT header
+        fields (`headerId`, `timestamp`, `version`, `manufacturer`,
+        `serialNumber`) are not surfaced; `lastUpdatedAt` provides the cache
+        freshness timestamp.
+      required:
+        - typeSpecification
+        - physicalParameters
+        - protocolLimits
+        - protocolFeatures
+        - mobileRobotGeometry
+        - loadSpecification
+        - lastUpdatedAt
+      properties:
+        typeSpecification:
+          $ref: '#/components/schemas/TypeSpecification'
+        physicalParameters:
+          $ref: '#/components/schemas/PhysicalParameters'
+        protocolLimits:
+          $ref: '#/components/schemas/ProtocolLimits'
+        protocolFeatures:
+          $ref: '#/components/schemas/ProtocolFeatures'
+        mobileRobotGeometry:
+          $ref: '#/components/schemas/MobileRobotGeometry'
+        loadSpecification:
+          $ref: '#/components/schemas/LoadSpecification'
+        mobileRobotConfiguration:
+          $ref: '#/components/schemas/MobileRobotConfiguration'
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          description: Time the factsheet cache was last refreshed.
+
+    TypeSpecification:
+      type: object
+      description: Type specification of the mobile robot, following the VDA 5050 factsheet schema.
+      required:
+        - seriesName
+        - mobileRobotKinematics
+        - mobileRobotClass
+        - maximumLoadMass
+        - localizationTypes
+        - navigationTypes
+      properties:
+        seriesName:
+          type: string
+        seriesDescription:
+          type: string
+        mobileRobotKinematics:
+          type: string
+          description: 'Extensible enumeration. Predefined values: `DIFFERENTIAL`, `OMNIDIRECTIONAL`, `THREE_WHEEL`.'
+        mobileRobotClass:
+          type: string
+          description: 'Extensible enumeration. Predefined values: `FORKLIFT`, `CONVEYOR`, `TUGGER`, `CARRIER`.'
+        maximumLoadMass:
+          type: number
+          format: double
+          minimum: 0
+          description: Maximum loadable mass in kilograms.
+        localizationTypes:
+          type: array
+          description: 'Extensible enumeration. Predefined values: `NATURAL`, `REFLECTOR`, `RFID`, `DMC`, `SPOT`, `GRID`.'
+          items:
+            type: string
+        navigationTypes:
+          type: array
+          description: 'List of path planning types supported, sorted by priority. Extensible enumeration. Predefined values: `PHYSICAL_LINE_GUIDED`, `VIRTUAL_LINE_GUIDED`, `FREELY_NAVIGATING`.'
+          items:
+            type: string
+        supportedZones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneType'
+
+    PhysicalParameters:
+      type: object
+      description: Physical properties of the mobile robot, following the VDA 5050 factsheet schema.
+      required:
+        - minimumSpeed
+        - maximumSpeed
+        - maximumAcceleration
+        - maximumDeceleration
+        - minimumHeight
+        - maximumHeight
+        - width
+        - length
+      properties:
+        minimumSpeed:
+          type: number
+          format: double
+          minimum: 0
+          description: Minimal controlled continuous speed in meters per second.
+        maximumSpeed:
+          type: number
+          format: double
+          minimum: 0
+          description: Maximum speed in meters per second.
+        minimumAngularSpeed:
+          type: number
+          format: double
+          minimum: 0
+          description: Minimal controlled continuous rotation speed in radians per second.
+        maximumAngularSpeed:
+          type: number
+          format: double
+          minimum: 0
+          description: Maximum rotation speed in radians per second.
+        maximumAcceleration:
+          type: number
+          format: double
+          minimum: 0
+          description: Maximum acceleration with maximum load in meters per second squared.
+        maximumDeceleration:
+          type: number
+          format: double
+          description: Maximum deceleration with maximum load in meters per second squared.
+        minimumHeight:
+          type: number
+          format: double
+          description: Minimum height of the mobile robot in meters.
+        maximumHeight:
+          type: number
+          format: double
+          description: Maximum height of the mobile robot in meters.
+        width:
+          type: number
+          format: double
+          description: Width of the mobile robot in meters.
+        length:
+          type: number
+          format: double
+          description: Length of the mobile robot in meters.
+
+    ProtocolLimits:
+      type: object
+      description: Protocol limitations of the mobile robot, following the VDA 5050 factsheet schema.
+      required:
+        - maximumStringLengths
+        - maximumArrayLengths
+        - timing
+      properties:
+        maximumStringLengths:
+          type: object
+          properties:
+            maximumMessageLength:
+              type: integer
+              format: int64
+              minimum: 0
+            maximumTopicSerialLength:
+              type: integer
+              format: int64
+              minimum: 0
+            maximumTopicElementLength:
+              type: integer
+              format: int64
+              minimum: 0
+            maximumIdLength:
+              type: integer
+              format: int64
+              minimum: 0
+            idNumericalOnly:
+              type: boolean
+            maximumLoadIdLength:
+              type: integer
+              format: int64
+              minimum: 0
+        maximumArrayLengths:
+          type: object
+          properties:
+            order.nodes:
+              type: integer
+              format: int64
+              minimum: 0
+            order.edges:
+              type: integer
+              format: int64
+              minimum: 0
+            node.actions:
+              type: integer
+              format: int64
+              minimum: 0
+            edge.actions:
+              type: integer
+              format: int64
+              minimum: 0
+            actions.actionsParameters:
+              type: integer
+              format: int64
+              minimum: 0
+            instantActions:
+              type: integer
+              format: int64
+              minimum: 0
+            trajectory.knotVector:
+              type: integer
+              format: int64
+              minimum: 0
+            trajectory.controlPoints:
+              type: integer
+              format: int64
+              minimum: 0
+            zoneSet.zones:
+              type: integer
+              format: int64
+              minimum: 0
+            state.nodeStates:
+              type: integer
+              format: int64
+              minimum: 0
+            state.edgeStates:
+              type: integer
+              format: int64
+              minimum: 0
+            state.loads:
+              type: integer
+              format: int64
+              minimum: 0
+            state.actionStates:
+              type: integer
+              format: int64
+              minimum: 0
+            state.instantActionStates:
+              type: integer
+              format: int64
+              minimum: 0
+            state.zoneActionStates:
+              type: integer
+              format: int64
+              minimum: 0
+            state.errors:
+              type: integer
+              format: int64
+              minimum: 0
+            state.information:
+              type: integer
+              format: int64
+              minimum: 0
+            error.errorReferences:
+              type: integer
+              format: int64
+              minimum: 0
+            information.infoReferences:
+              type: integer
+              format: int64
+              minimum: 0
+        timing:
+          type: object
+          required:
+            - minimumOrderInterval
+            - minimumStateInterval
+          properties:
+            minimumOrderInterval:
+              type: number
+              format: double
+              minimum: 0
+              description: Minimum interval sending order messages to the mobile robot in seconds.
+            minimumStateInterval:
+              type: number
+              format: double
+              minimum: 0
+              description: Minimum interval for sending state messages in seconds.
+            defaultStateInterval:
+              type: number
+              format: double
+              minimum: 0
+              description: Default interval for sending state messages in seconds.
+            visualizationInterval:
+              type: number
+              format: double
+              minimum: 0
+              description: Default interval for sending messages on the visualization topic in seconds.
+
+    ProtocolFeatures:
+      type: object
+      description: Supported features of the VDA 5050 protocol, following the VDA 5050 factsheet schema.
+      required:
+        - optionalParameters
+        - mobileRobotActions
+      properties:
+        optionalParameters:
+          type: array
+          items:
+            type: object
+            required:
+              - parameter
+              - support
+            properties:
+              parameter:
+                type: string
+                description: Full name of the optional parameter, e.g. `order.nodes.nodePosition.allowedDeviationTheta`.
+              support:
+                type: string
+                enum:
+                  - SUPPORTED
+                  - REQUIRED
+              description:
+                type: string
+        mobileRobotActions:
+          type: array
+          items:
+            type: object
+            required:
+              - actionType
+              - actionScopes
+              - pauseAllowed
+              - cancelAllowed
+            properties:
+              actionType:
+                type: string
+              actionDescription:
+                type: string
+              actionScopes:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - INSTANT
+                    - NODE
+                    - EDGE
+                    - ZONE
+              actionParameters:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - key
+                    - valueDataType
+                  properties:
+                    key:
+                      type: string
+                    valueDataType:
+                      type: string
+                      enum:
+                        - BOOL
+                        - NUMBER
+                        - INTEGER
+                        - STRING
+                        - OBJECT
+                        - ARRAY
+                    description:
+                      type: string
+                    isOptional:
+                      type: boolean
+              actionResult:
+                type: string
+              blockingTypes:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BlockingType'
+              pauseAllowed:
+                type: boolean
+              cancelAllowed:
+                type: boolean
+
+    MobileRobotGeometry:
+      type: object
+      description: Mobile robot geometry, following the VDA 5050 factsheet schema.
+      properties:
+        wheelDefinitions:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - isActiveDriven
+              - isActiveSteered
+              - position
+              - diameter
+              - width
+            properties:
+              type:
+                type: string
+                description: 'Extensible enumeration. Predefined values: `DRIVE`, `CASTER`, `FIXED`, `MECANUM`.'
+              isActiveDriven:
+                type: boolean
+              isActiveSteered:
+                type: boolean
+              position:
+                type: object
+                required:
+                  - x
+                  - y
+                properties:
+                  x:
+                    type: number
+                    format: double
+                  y:
+                    type: number
+                    format: double
+                  theta:
+                    type: number
+                    format: double
+              diameter:
+                type: number
+                format: double
+              width:
+                type: number
+                format: double
+              centerDisplacement:
+                type: number
+                format: double
+              constraints:
+                type: string
+        envelopes2d:
+          type: array
+          items:
+            type: object
+            required:
+              - envelope2dId
+              - vertices
+            properties:
+              envelope2dId:
+                type: string
+              vertices:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - x
+                    - y
+                  properties:
+                    x:
+                      type: number
+                      format: double
+                    y:
+                      type: number
+                      format: double
+              description:
+                type: string
+        envelopes3d:
+          type: array
+          items:
+            type: object
+            required:
+              - envelope3dId
+              - format
+            properties:
+              envelope3dId:
+                type: string
+              format:
+                type: string
+              data:
+                type: object
+              url:
+                type: string
+                format: uri
+              description:
+                type: string
+
+    LoadSpecification:
+      type: object
+      description: Abstract specification of load capabilities, following the VDA 5050 factsheet schema.
+      properties:
+        loadPositions:
+          type: array
+          items:
+            type: string
+        loadSets:
+          type: array
+          items:
+            type: object
+            required:
+              - setName
+              - loadType
+            properties:
+              setName:
+                type: string
+              loadType:
+                type: string
+              loadPositions:
+                type: array
+                items:
+                  type: string
+              boundingBoxReference:
+                type: object
+                required:
+                  - x
+                  - y
+                  - z
+                properties:
+                  x:
+                    type: number
+                    format: double
+                  y:
+                    type: number
+                    format: double
+                  z:
+                    type: number
+                    format: double
+                  theta:
+                    type: number
+                    format: double
+              loadDimensions:
+                type: object
+                required:
+                  - length
+                  - width
+                properties:
+                  length:
+                    type: number
+                    format: double
+                  width:
+                    type: number
+                    format: double
+                  height:
+                    type: number
+                    format: double
+              maximumWeight:
+                type: number
+                format: double
+                minimum: 0
+                description: Maximum weight of load type in kilograms.
+              minimumLoadhandlingHeight:
+                type: number
+                format: double
+                minimum: 0
+              maximumLoadhandlingHeight:
+                type: number
+                format: double
+                minimum: 0
+              minimumLoadhandlingDepth:
+                type: number
+                format: double
+              maximumLoadhandlingDepth:
+                type: number
+                format: double
+              minimumLoadhandlingTilt:
+                type: number
+                format: double
+              maximumLoadhandlingTilt:
+                type: number
+                format: double
+              maximumSpeed:
+                type: number
+                format: double
+                minimum: 0
+              maximumAcceleration:
+                type: number
+                format: double
+                minimum: 0
+              maximumDeceleration:
+                type: number
+                format: double
+              pickTime:
+                type: number
+                format: double
+                minimum: 0
+                description: Approximate time for picking up the load in seconds.
+              dropTime:
+                type: number
+                format: double
+                minimum: 0
+                description: Approximate time for dropping the load in seconds.
+              description:
+                type: string
+
+    MobileRobotConfiguration:
+      type: object
+      description: Mobile robot configuration, following the VDA 5050 factsheet schema.
+      properties:
+        versions:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+        network:
+          type: object
+          properties:
+            dnsServers:
+              type: array
+              items:
+                type: string
+            ntpServers:
+              type: array
+              items:
+                type: string
+            localIpAddress:
+              type: string
+            netmask:
+              type: string
+            defaultGateway:
+              type: string
+        batteryCharging:
+          type: object
+          properties:
+            criticalLowChargingLevel:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            minimumDesiredChargingLevel:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            maximumDesiredChargingLevel:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            minimumChargingTime:
+              type: number
+              format: double
+              minimum: 0
+              description: Desired minimum charging time in seconds.
+
+    OrderList:
       type: object
       required:
-        - taskId
+        - orders
+        - pagination
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OrderSummary:
+      type: object
+      description: |-
+        Management-side summary of an order. Includes management metadata and
+        node, edge, and action counts for quick visualization, without
+        surfacing the full VDA 5050 `nodes`, `edges`, and `actions` arrays.
+      required:
+        - orderId
+        - orderUpdateId
         - status
+        - assignedRobotId
         - createdAt
       properties:
-        taskId:
+        orderId:
           type: string
-          example: task-1024
+          description: VDA 5050 order identifier.
+          example: order-2026-0001
+        orderUpdateId:
+          type: integer
+          format: int64
+          minimum: 0
+          description: VDA 5050 order update identifier.
+          example: 3
+        orderDescription:
+          type: string
+          description: Additional human-readable information for visualization purposes only.
         status:
-          type: string
-          enum:
-            - QUEUED
-            - RUNNING
-            - SUCCEEDED
-            - FAILED
-            - CANCELED
+          $ref: '#/components/schemas/OrderStatus'
         assignedRobotId:
           type: string
-          nullable: true
-          example: amr-001
+          description: Identifier of the robot assigned to execute the order.
+          example: Syrius.SOR-Carrier-001
         createdAt:
           type: string
           format: date-time
+          description: Order creation timestamp.
           example: '2026-07-29T09:00:00Z'
+        nodeCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of nodes in the order.
+        edgeCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of edges in the order.
+        actionCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of actions across all nodes and edges.
+
+    OrderDetail:
+      type: object
+      description: |-
+        Complete VDA 5050 order content plus management metadata. The
+        underlying `orderId`, `orderUpdateId`, `nodes`, `edges`, and `actions`
+        fields remain fully VDA 5050-compatible.
+      required:
+        - orderId
+        - orderUpdateId
+        - nodes
+        - edges
+        - status
+        - assignedRobotId
+        - createdAt
+      properties:
+        orderId:
+          type: string
+          description: VDA 5050 order identifier.
+          example: order-2026-0001
+        orderUpdateId:
+          type: integer
+          format: int64
+          minimum: 0
+          description: VDA 5050 order update identifier. `0` for a newly created order.
+          example: 0
+        orderDescription:
+          type: string
+          description: Additional human-readable information for visualization purposes only.
+        nodes:
+          type: array
+          description: Array of nodes to be traversed for fulfilling the order.
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Node'
+        edges:
+          type: array
+          description: Array of edges to be traversed for fulfilling the order. May be empty if the order contains a single node.
+          items:
+            $ref: '#/components/schemas/Edge'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        assignedRobotId:
+          type: string
+          description: Identifier of the robot assigned to execute the order.
+          example: Syrius.SOR-Carrier-001
+        createdAt:
+          type: string
+          format: date-time
+          description: Order creation timestamp.
+          example: '2026-07-29T09:00:00Z'
+
+    OrderCreateRequest:
+      type: object
+      description: |-
+        Request body for creating a new order. Carries the VDA 5050 order
+        content plus the management-side `assignedRobotId`. The server injects
+        `orderId` and `orderUpdateId` set to `0` for a new order.
+      required:
+        - nodes
+        - edges
+        - assignedRobotId
+      properties:
+        orderDescription:
+          type: string
+          description: Additional human-readable information for visualization purposes only.
+        nodes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Node'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Edge'
+        assignedRobotId:
+          type: string
+          description: Identifier of the robot assigned to execute the order.
+          example: Syrius.SOR-Carrier-001
+
+    Node:
+      type: object
+      description: Node of an order, following the VDA 5050 order schema.
+      required:
+        - nodeId
+        - sequenceId
+        - released
+        - actions
+      properties:
+        nodeId:
+          type: string
+        sequenceId:
+          type: integer
+          format: int64
+          minimum: 0
+        nodeDescriptor:
+          type: string
+        released:
+          type: boolean
+          description: True if the node is part of the base, false if part of the horizon.
+        nodePosition:
+          $ref: '#/components/schemas/NodePosition'
+        actions:
+          type: array
+          description: Actions to be executed on the node.
+          items:
+            $ref: '#/components/schemas/Action'
+
+    Edge:
+      type: object
+      description: Edge of an order, following the VDA 5050 order schema.
+      required:
+        - edgeId
+        - sequenceId
+        - released
+        - actions
+      properties:
+        edgeId:
+          type: string
+        sequenceId:
+          type: integer
+          format: int64
+          minimum: 0
+        edgeDescriptor:
+          type: string
+        released:
+          type: boolean
+          description: True if the edge is part of the base, false if part of the horizon.
+        maximumSpeed:
+          type: number
+          format: double
+          description: Permitted maximum speed on the edge in meters per second.
+        maximumMobileRobotHeight:
+          type: number
+          format: double
+          description: Permitted maximum height of the mobile robot including load in meters.
+        minimumLoadHandlingDeviceHeight:
+          type: number
+          format: double
+          description: Permitted minimal height of the load handling device in meters.
+        orientation:
+          type: number
+          format: double
+          minimum: -3.14159265359
+          maximum: 3.14159265359
+          description: Orientation of the mobile robot on the edge in radians.
+        orientationType:
+          type: string
+          description: How `orientation` is interpreted. Defaults to `TANGENTIAL`.
+          enum:
+            - GLOBAL
+            - TANGENTIAL
+        direction:
+          type: string
+          description: Direction at junctions for line-guided or wire-guided mobile robots.
+        reachOrientationBeforeEntering:
+          type: boolean
+          description: True if the desired edge orientation shall be reached before entering the edge. Defaults to false.
+        maxRotationSpeed:
+          type: number
+          format: double
+          description: Maximum rotation speed in radians per second.
+        trajectory:
+          $ref: '#/components/schemas/Trajectory'
+        length:
+          type: number
+          format: double
+          description: Distance of the path from start node to end node in meters.
+        corridor:
+          $ref: '#/components/schemas/Corridor'
+        actions:
+          type: array
+          description: Actions to be executed on the edge.
+          items:
+            $ref: '#/components/schemas/Action'
+
+    NodePosition:
+      type: object
+      description: Position on a map, following the VDA 5050 order nodePosition schema.
+      required:
+        - x
+        - y
+        - mapId
+      properties:
+        x:
+          type: number
+          format: double
+          description: X position in meters.
+        y:
+          type: number
+          format: double
+          description: Y position in meters.
+        theta:
+          type: number
+          format: double
+          minimum: -3.14159265359
+          maximum: 3.14159265359
+          description: Absolute orientation of the mobile robot on the node in radians. Optional.
+        allowedDeviationXY:
+          type: object
+          required:
+            - a
+            - b
+            - theta
+          properties:
+            a:
+              type: number
+              format: double
+              minimum: 0
+              description: Length of the ellipse semi-major axis in meters.
+            b:
+              type: number
+              format: double
+              minimum: 0
+              description: Length of the ellipse semi-minor axis in meters.
+            theta:
+              type: number
+              format: double
+              minimum: -1.570796327
+              maximum: 1.570796327
+              description: Rotation angle in radians.
+        allowedDeviationTheta:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 3.141592654
+          description: Allowed deviation of the theta angle in radians.
+        mapId:
+          type: string
+          description: Unique identification of the map in which the position is referenced.
+
+    Action:
+      type: object
+      description: VDA 5050 action object.
+      required:
+        - actionType
+        - blockingType
+      properties:
+        actionId:
+          type: string
+          description: 'Unique action identifier. Server-generated when omitted by the client on instant action creation. Suggested format: UUID.'
+        actionType:
+          type: string
+          description: Name of the action. Identifies the function of the action.
+        actionDescriptor:
+          type: string
+        blockingType:
+          $ref: '#/components/schemas/BlockingType'
+        actionParameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionParameter'
+        retriable:
+          type: boolean
+          description: True if the action can enter the RETRIABLE state when it fails. Defaults to false.
+
+    ActionParameter:
+      type: object
+      description: VDA 5050 action parameter.
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+          description: Key of the action parameter.
+        value:
+          description: Value of the action parameter. May be a boolean, number, integer, string, array, or object.
+          oneOf:
+            - type: boolean
+            - type: number
+              format: double
+            - type: integer
+              format: int64
+            - type: string
+            - type: array
+              items: {}
+            - type: object
+
+    Trajectory:
+      type: object
+      description: NURBS trajectory, following the VDA 5050 schema.
+      required:
+        - controlPoints
+      properties:
+        degree:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Degree of the NURBS curve. Defaults to `1` when not defined.
+        knotVector:
+          type: array
+          items:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 1
+        controlPoints:
+          type: array
+          items:
+            type: object
+            required:
+              - x
+              - y
+            properties:
+              x:
+                type: number
+                format: double
+              y:
+                type: number
+                format: double
+              weight:
+                type: number
+                format: double
+                description: Weight of the control point. Defaults to `1.0` when not defined.
+
+    Corridor:
+      type: object
+      description: Corridor boundaries, following the VDA 5050 order schema.
+      required:
+        - leftWidth
+        - rightWidth
+      properties:
+        leftWidth:
+          type: number
+          format: double
+          minimum: 0
+          description: Width of the corridor to the left of the trajectory in meters.
+        rightWidth:
+          type: number
+          format: double
+          minimum: 0
+          description: Width of the corridor to the right of the trajectory in meters.
+        corridorReferencePoint:
+          type: string
+          description: Whether the boundaries apply to the kinematic center or the contour of the mobile robot.
+          enum:
+            - KINEMATIC_CENTER
+            - CONTOUR
+        releaseRequired:
+          type: boolean
+          description: True if the robot must request approval from fleet control. Defaults to false.
+        releaseLossBehavior:
+          type: string
+          description: Behavior of the robot if its corridor release expires or is revoked. Defaults to `STOP`.
+          enum:
+            - STOP
+            - RETURN
+
+    InstantActionList:
+      type: object
+      required:
+        - instantActions
+        - pagination
+      properties:
+        instantActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstantAction'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    InstantActionCreateRequest:
+      type: object
+      description: |-
+        Request body for triggering a single instant action. Carries a single
+        VDA 5050 action object without `actionId`; the server generates
+        `actionId` and returns the persisted instant action.
+      required:
+        - actionType
+        - blockingType
+      properties:
+        actionType:
+          type: string
+          description: |-
+            Name of the instant action. Predefined actions include
+            `cancelOrder`, `startPause`, `stopPause`, `startHibernation`,
+            `stopHibernation`, and `factsheetRequest`. Manufacturer-specific
+            actions follow the same schema.
+          example: cancelOrder
+        actionDescriptor:
+          type: string
+        blockingType:
+          $ref: '#/components/schemas/BlockingType'
+        actionParameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionParameter'
+        retriable:
+          type: boolean
+          description: True if the action can enter the RETRIABLE state when it fails. Defaults to false.
+
+    InstantAction:
+      type: object
+      description: Persisted instant action with server-generated `actionId` and current `actionStatus`.
+      required:
+        - actionId
+        - actionType
+        - blockingType
+        - actionStatus
+        - robotId
+        - createdAt
+        - lastUpdatedAt
+      properties:
+        actionId:
+          type: string
+          description: Server-generated unique action identifier.
+        actionType:
+          type: string
+        actionDescriptor:
+          type: string
+        blockingType:
+          $ref: '#/components/schemas/BlockingType'
+        actionParameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionParameter'
+        retriable:
+          type: boolean
+        actionStatus:
+          $ref: '#/components/schemas/ActionStatus'
+        actionResult:
+          type: string
+          description: Description of the result, errors are transmitted in the robot `errors` array.
+        robotId:
+          type: string
+          description: Robot targeted by the instant action.
+          example: Syrius.SOR-Carrier-001
+        createdAt:
+          type: string
+          format: date-time
+          description: Instant action creation timestamp.
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          description: Time the instant action was last updated.
+
+    MapList:
+      type: object
+      required:
+        - maps
+      properties:
+        maps:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapSummary'
+
+    MapDetail:
+      type: object
+      description: |-
+        Detail view for a map, reusing VDA 5050-compatible identifiers and
+        status fields where they describe the same map concept.
+      required:
+        - mapId
+        - mapVersion
+        - mapStatus
+      properties:
+        mapId:
+          type: string
+          description: VDA 5050 map identifier.
+        mapVersion:
+          type: string
+          description: VDA 5050 map version.
+        mapDescriptor:
+          type: string
+          description: VDA 5050 map descriptor, a user-defined, human-readable name.
+        mapStatus:
+          $ref: '#/components/schemas/MapStatus'
+
+    NavigationGraph:
+      type: object
+      description: |-
+        Navigation graph part of a map, sourced from the Spatial API. Node
+        and edge fields stay aligned with VDA 5050 order and state terminology.
+      required:
+        - nodes
+        - edges
+      properties:
+        nodes:
+          type: array
+          description: Graph nodes, aligned with VDA 5050 node terminology.
+          items:
+            $ref: '#/components/schemas/NavigationGraphNode'
+        edges:
+          type: array
+          description: Graph edges, aligned with VDA 5050 edge terminology.
+          items:
+            $ref: '#/components/schemas/NavigationGraphEdge'
+
+    NavigationGraphNode:
+      type: object
+      required:
+        - nodeId
+        - nodePosition
+      properties:
+        nodeId:
+          type: string
+        nodeDescriptor:
+          type: string
+        nodePosition:
+          $ref: '#/components/schemas/NodePosition'
+
+    NavigationGraphEdge:
+      type: object
+      required:
+        - edgeId
+        - startNodeId
+        - endNodeId
+      properties:
+        edgeId:
+          type: string
+        edgeDescriptor:
+          type: string
+        startNodeId:
+          type: string
+          description: Identifier of the start node of the edge.
+        endNodeId:
+          type: string
+          description: Identifier of the end node of the edge.
+        orientation:
+          type: number
+          format: double
+          minimum: -3.14159265359
+          maximum: 3.14159265359
+          description: Orientation of the mobile robot on the edge in radians.
+        orientationType:
+          type: string
+          enum:
+            - GLOBAL
+            - TANGENTIAL
+        length:
+          type: number
+          format: double
+          description: Distance of the path from start node to end node in meters.
+        maximumSpeed:
+          type: number
+          format: double
+          description: Permitted maximum speed on the edge in meters per second.
+
+    ZoneList:
+      type: object
+      required:
+        - zones
+        - pagination
+      properties:
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Zone'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Zone:
+      type: object
+      description: |-
+        Zone following the VDA 5050 zoneSet schema. The base fields
+        (`zoneId`, `zoneType`, `vertices`, `zoneDescriptor`) are always
+        present. Zone-type-specific conditional fields
+        (`releaseLossBehavior`, `maximumSpeed`, `entryActions`,
+        `duringActions`, `exitActions`, `priorityFactor`, `penaltyFactor`,
+        `direction`, `directedLimitation`, `bidirectedLimitation`) are
+        modeled as optional and are not enforced with `if/then` constraints at
+        the contract level.
+      required:
+        - zoneId
+        - zoneType
+        - vertices
+      properties:
+        zoneId:
+          type: string
+          description: Locally unique zone identifier within the zone set.
+        zoneType:
+          $ref: '#/components/schemas/ZoneType'
+        zoneDescriptor:
+          type: string
+          description: User-defined, human-readable name or descriptor.
+        vertices:
+          type: array
+          minItems: 3
+          description: Vertices defining the geometrical shape of the zone.
+          items:
+            $ref: '#/components/schemas/Vertex'
+        releaseLossBehavior:
+          type: string
+          description: Required for `RELEASE` zones. Behavior if the release expires or is revoked.
+          enum:
+            - STOP
+            - CONTINUE
+            - EVACUATE
+        maximumSpeed:
+          type: number
+          format: double
+          description: Required for `SPEED_LIMIT` zones. Maximum allowed speed in meters per second.
+        entryActions:
+          type: array
+          description: Required for `ACTION` zones. Actions executed when entering the zone.
+          items:
+            $ref: '#/components/schemas/Action'
+        duringActions:
+          type: array
+          description: Required for `ACTION` zones. Actions executed while crossing the zone.
+          items:
+            $ref: '#/components/schemas/Action'
+        exitActions:
+          type: array
+          description: Required for `ACTION` zones. Actions triggered when leaving the zone.
+          items:
+            $ref: '#/components/schemas/Action'
+        priorityFactor:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Required for `PRIORITY` zones. Relative preference factor.
+        penaltyFactor:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Required for `PENALTY` zones. Relative penalty factor.
+        direction:
+          type: number
+          format: double
+          description: Required for `DIRECTED` and `BIDIRECTED` zones. Preferred direction of travel in radians.
+        directedLimitation:
+          type: string
+          description: Required for `DIRECTED` zones. Strictness of the direction constraint.
+          enum:
+            - SOFT
+            - RESTRICTED
+            - STRICT
+        bidirectedLimitation:
+          type: string
+          description: Required for `BIDIRECTED` zones. Strictness of the bidirectional constraint.
+          enum:
+            - SOFT
+            - RESTRICTED
+
+    Vertex:
+      type: object
+      description: Vertex of a zone polygon, following the VDA 5050 zoneSet schema.
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          format: double
+          description: X coordinate in meters.
+        y:
+          type: number
+          format: double
+          description: Y coordinate in meters.
+
     FleetOverview:
       type: object
       required:
         - robotCount
         - onlineRobotCount
-        - activeTaskCount
-        - queuedTaskCount
+        - activeOrderCount
+        - queuedOrderCount
         - updatedAt
       properties:
         robotCount:
@@ -326,15 +2686,17 @@ components:
           format: int32
           minimum: 0
           example: 10
-        activeTaskCount:
+        activeOrderCount:
           type: integer
           format: int32
           minimum: 0
+          description: Number of orders currently in the `RUNNING` state.
           example: 7
-        queuedTaskCount:
+        queuedOrderCount:
           type: integer
           format: int32
           minimum: 0
+          description: Number of orders currently in the `QUEUED` state.
           example: 5
         updatedAt:
           type: string
