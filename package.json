@@ -4,12 +4,12 @@
   "description": "`syrius-orbit-contracts` is the contract repository for SyriusOrbit, a spatial information and scheduling service platform for indoor Autonomous Mobile Robots (AMRs) built on an edge-cloud collaborative architecture.",
   "main": "index.js",
   "scripts": {
-    "lint:openapi": "redocly lint \"openapi/*.yaml\"",
-    "lint:ogc-examples": "redocly lint \"ogc_official_examples/*.yaml\"",
+    "lint:openapi": "redocly lint \"spatial/*.yaml\" \"fleet-management/*.yaml\"",
+    "lint:ogc-examples": "redocly lint \"standards/ogc/*.yaml\"",
     "lint:all": "npm run lint:openapi && npm run lint:ogc-examples",
-    "bundle:ogc-features": "redocly bundle openapi/ogc-features.yaml -o .tmp/ogc-features.bundled.yaml",
-    "validate:ogc-features": "swagger-cli validate openapi/ogc-features.yaml",
-    "spectral:openapi": "spectral lint \"openapi/*.yaml\""
+    "bundle:spatial": "redocly bundle spatial/syriusorbit.yaml -o .tmp/syriusorbit.bundled.yaml",
+    "validate:spatial": "swagger-cli validate spatial/syriusorbit.yaml",
+    "spectral:openapi": "spectral lint \"spatial/*.yaml\" \"fleet-management/*.yaml\""
   },
   "repository": {
     "type": "git",
