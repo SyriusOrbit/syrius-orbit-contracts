@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: SyriusOrbit Fleet Management API
   version: 0.1.1
@@ -800,11 +800,11 @@ components:
         robotId:
           type: string
           description: Robot identifier composed as `{manufacturer}.{serialNumber}`.
-          example: Syrius.SOR-Carrier-001
+          examples: [Syrius.SOR-Carrier-001]
         displayName:
           type: string
           description: Management-side display name.
-          example: Carrier 001
+          examples: [Carrier 001]
         connectionState:
           $ref: '#/components/schemas/ConnectionState'
         operatingMode:
@@ -821,7 +821,7 @@ components:
           minimum: 0
           maximum: 100
           description: Battery state of charge in percent, sourced from `state.powerSupply.stateOfCharge`.
-          example: 87.5
+          examples: [87.5]
         charging:
           type: boolean
           description: True if charging is in progress, sourced from `state.powerSupply.charging`.
@@ -829,7 +829,7 @@ components:
           type: string
           format: date-time
           description: Time the data was last updated, sourced from the VDA 5050 state `timestamp`.
-          example: '2026-07-29T09:30:00Z'
+          examples: ['2026-07-29T09:30:00Z']
 
     RobotDetail:
       allOf:
@@ -853,35 +853,35 @@ components:
             manufacturer:
               type: string
               description: Manufacturer of the mobile robot, sourced from the VDA 5050 message header.
-              example: Syrius
+              examples: [Syrius]
             serialNumber:
               type: string
               description: Serial number of the mobile robot, sourced from the VDA 5050 message header.
-              example: SOR-Carrier-001
+              examples: [SOR-Carrier-001]
             protocolVersion:
               type: string
               description: VDA 5050 protocol version, sourced from the VDA 5050 message header `version`.
-              example: 2.0.0
+              examples: [2.0.0]
             orderId:
               type: string
               description: Identifier of the current order or the previous finished order, sourced from `state.orderId`. Empty string if no previous orderId is available.
-              example: order-2026-0001
+              examples: [order-2026-0001]
             orderUpdateId:
               type: integer
               format: int64
               minimum: 0
               description: Order update identification of the currently accepted order, sourced from `state.orderUpdateId`. `0` if no previous orderUpdateId is available.
-              example: 3
+              examples: [3]
             lastNodeId:
               type: string
               description: Node identifier of the last reached node or the current node, sourced from `state.lastNodeId`. Empty string if no lastNodeId is available.
-              example: Node-7
+              examples: [Node-7]
             lastNodeSequenceId:
               type: integer
               format: int64
               minimum: 0
               description: Sequence identifier of the last reached node, sourced from `state.lastNodeSequenceId`.
-              example: 7
+              examples: [7]
             mobileRobotPosition:
               $ref: '#/components/schemas/MobileRobotPosition'
             velocity:
@@ -1986,13 +1986,13 @@ components:
         orderId:
           type: string
           description: VDA 5050 order identifier.
-          example: order-2026-0001
+          examples: [order-2026-0001]
         orderUpdateId:
           type: integer
           format: int64
           minimum: 0
           description: VDA 5050 order update identifier.
-          example: 3
+          examples: [3]
         orderDescription:
           type: string
           description: Additional human-readable information for visualization purposes only.
@@ -2001,12 +2001,12 @@ components:
         assignedRobotId:
           type: string
           description: Identifier of the robot assigned to execute the order.
-          example: Syrius.SOR-Carrier-001
+          examples: [Syrius.SOR-Carrier-001]
         createdAt:
           type: string
           format: date-time
           description: Order creation timestamp.
-          example: '2026-07-29T09:00:00Z'
+          examples: ['2026-07-29T09:00:00Z']
         nodeCount:
           type: integer
           format: int64
@@ -2041,13 +2041,13 @@ components:
         orderId:
           type: string
           description: VDA 5050 order identifier.
-          example: order-2026-0001
+          examples: [order-2026-0001]
         orderUpdateId:
           type: integer
           format: int64
           minimum: 0
           description: VDA 5050 order update identifier. `0` for a newly created order.
-          example: 0
+          examples: [0]
         orderDescription:
           type: string
           description: Additional human-readable information for visualization purposes only.
@@ -2067,12 +2067,12 @@ components:
         assignedRobotId:
           type: string
           description: Identifier of the robot assigned to execute the order.
-          example: Syrius.SOR-Carrier-001
+          examples: [Syrius.SOR-Carrier-001]
         createdAt:
           type: string
           format: date-time
           description: Order creation timestamp.
-          example: '2026-07-29T09:00:00Z'
+          examples: ['2026-07-29T09:00:00Z']
 
     OrderCreateRequest:
       type: object
@@ -2100,7 +2100,7 @@ components:
         assignedRobotId:
           type: string
           description: Identifier of the robot assigned to execute the order.
-          example: Syrius.SOR-Carrier-001
+          examples: [Syrius.SOR-Carrier-001]
 
     Node:
       type: object
@@ -2407,7 +2407,7 @@ components:
             `cancelOrder`, `startPause`, `stopPause`, `startHibernation`,
             `stopHibernation`, and `factsheetRequest`. Manufacturer-specific
             actions follow the same schema.
-          example: cancelOrder
+          examples: [cancelOrder]
         actionDescriptor:
           type: string
         blockingType:
@@ -2468,7 +2468,7 @@ components:
         robotId:
           type: string
           description: Robot targeted by the instant action.
-          example: Syrius.SOR-Carrier-001
+          examples: [Syrius.SOR-Carrier-001]
         createdAt:
           type: string
           format: date-time
@@ -2721,25 +2721,25 @@ components:
           type: integer
           format: int32
           minimum: 0
-          example: 12
+          examples: [12]
         onlineRobotCount:
           type: integer
           format: int32
           minimum: 0
-          example: 10
+          examples: [10]
         activeOrderCount:
           type: integer
           format: int32
           minimum: 0
           description: Number of orders currently in the `RUNNING` state.
-          example: 7
+          examples: [7]
         queuedOrderCount:
           type: integer
           format: int32
           minimum: 0
           description: Number of orders currently in the `QUEUED` state.
-          example: 5
+          examples: [5]
         updatedAt:
           type: string
           format: date-time
-          example: '2026-07-29T09:30:00Z'
+          examples: ['2026-07-29T09:30:00Z']
