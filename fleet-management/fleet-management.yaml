@@ -832,6 +832,12 @@ components:
           examples: ['2026-07-29T09:30:00Z']
 
     RobotDetail:
+      description: |-
+        Complete VDA 5050 state fields plus management metadata. The request
+        fields (`newBaseRequest`, `zoneRequests`, `edgeRequests`) are exposed
+        as read-only observation of the robot's pending control requests.
+        The actual grant/revoke responses are handled by the Fleet Control
+        API via the `responses` topic and are not in scope of this HTTP API.
       allOf:
         - $ref: '#/components/schemas/RobotSummary'
         - type: object
@@ -940,6 +946,29 @@ components:
               description: Zone sets currently stored on the mobile robot, sourced from `state.zoneSets`.
               items:
                 $ref: '#/components/schemas/ZoneSetSummary'
+            plannedPath:
+              $ref: '#/components/schemas/PlannedPath'
+            intermediatePath:
+              $ref: '#/components/schemas/IntermediatePath'
+            distanceSinceLastNode:
+              type: number
+              format: double
+              minimum: 0
+              description: Distance the mobile robot has been driving past the `lastNodeId`, in meters. Used by line-guided vehicles, sourced from `state.distanceSinceLastNode`.
+            newBaseRequest:
+              type: boolean
+              description: |-
+                True if the mobile robot is almost at the end of the base and will reduce speed if no new base is transmitted. Sourced from `state.newBaseRequest`. Read-only observation; the base update response is handled by the Fleet Control API.
+            zoneRequests:
+              type: array
+              description: Zone requests currently active on the mobile robot, sourced from `state.zoneRequests`. Empty array if no zone requests are active. Read-only observation; grant/revoke responses are handled by the Fleet Control API.
+              items:
+                $ref: '#/components/schemas/ZoneRequest'
+            edgeRequests:
+              type: array
+              description: Edge requests currently active on the mobile robot, sourced from `state.edgeRequests`. Empty array if no edge requests are active. Read-only observation; grant/revoke responses are handled by the Fleet Control API.
+              items:
+                $ref: '#/components/schemas/EdgeRequest'
 
     MobileRobotPosition:
       type: object
@@ -1332,6 +1361,140 @@ components:
           enum:
             - ENABLED
             - DISABLED
+
+    PlannedPath:
+      type: object
+      description: Path within the robot's currently active order, represented as a NURBS trajectory, following the VDA 5050 state schema.
+      required:
+        - trajectory
+      properties:
+        trajectory:
+          $ref: '#/components/schemas/Trajectory'
+        traversedNodes:
+          type: array
+          description: Node identifiers from the currently executed order that are traversed within the planned path.
+          items:
+            type: string
+
+    IntermediatePath:
+      type: object
+      description: Estimated time of arrival at closer waypoints that the mobile robot is able to perceive with its sensors, following the VDA 5050 state schema.
+      required:
+        - polyline
+      properties:
+        polyline:
+          type: array
+          description: Array of endpoints of polyline segments.
+          items:
+            type: object
+            required:
+              - x
+              - y
+              - eta
+            properties:
+              x:
+                type: number
+                format: double
+                description: X coordinate in meters.
+              y:
+                type: number
+                format: double
+                description: Y coordinate in meters.
+              theta:
+                type: number
+                format: double
+                minimum: -3.14159265359
+                maximum: 3.14159265359
+                description: Absolute orientation of the mobile robot in radians.
+              eta:
+                type: string
+                format: date-time
+                description: Estimated time of arrival/traversal in ISO 8601 UTC format.
+
+    ZoneRequest:
+      type: object
+      description: |-
+        Zone request sent by the mobile robot to fleet control, following the
+        VDA 5050 state schema. Exposed as read-only observation; the
+        grant/revoke response is handled by the Fleet Control API via the
+        `responses` topic.
+      required:
+        - requestId
+        - requestType
+        - zoneId
+        - zoneSetId
+        - requestStatus
+      properties:
+        requestId:
+          type: string
+          description: Unique per mobile robot identifier within all active requests.
+        requestType:
+          type: string
+          description: Type of zone request. `ACCESS` for RELEASE zones, `REPLANNING` for COORDINATED_REPLANNING zones.
+          enum:
+            - ACCESS
+            - REPLANNING
+        zoneId:
+          type: string
+          description: Locally unique identifier within the zone set, referencing the zone the request relates to.
+        zoneSetId:
+          type: string
+          description: Identifier of the zone set, required because `zoneId` is only unique within a zone set.
+        requestStatus:
+          type: string
+          description: |-
+            Status of the zone request. `REQUESTED` when initially stated;
+            `GRANTED` or `REVOKED` after fleet control response; `EXPIRED`
+            when the lease time has passed without response.
+          enum:
+            - REQUESTED
+            - GRANTED
+            - REVOKED
+            - EXPIRED
+        trajectory:
+          $ref: '#/components/schemas/Trajectory'
+
+    EdgeRequest:
+      type: object
+      description: |-
+        Edge request sent by the mobile robot to fleet control, following the
+        VDA 5050 state schema. Exposed as read-only observation; the
+        grant/revoke response is handled by the Fleet Control API via the
+        `responses` topic.
+      required:
+        - requestId
+        - requestType
+        - edgeId
+        - sequenceId
+        - requestStatus
+      properties:
+        requestId:
+          type: string
+          description: Unique per mobile robot identifier across all active requests.
+        requestType:
+          type: string
+          description: Type of edge request. Currently only `CORRIDOR` is defined.
+          enum:
+            - CORRIDOR
+        edgeId:
+          type: string
+          description: Globally unique identifier referencing the edge the request relates to.
+        sequenceId:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Sequence identifier of the edge within the order, required to uniquely identify the referenced edge.
+        requestStatus:
+          type: string
+          description: |-
+            Status of the edge request. `REQUESTED` when initially stated;
+            `GRANTED` or `REVOKED` after fleet control response; `EXPIRED`
+            when the lease time has passed without response.
+          enum:
+            - REQUESTED
+            - GRANTED
+            - REVOKED
+            - EXPIRED
 
     FactsheetView:
       type: object

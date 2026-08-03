@@ -149,6 +149,14 @@ Contains complete VDA5050 state plus management metadata:
 | `safetyState` | object | state.safetyState |
 | `maps[]` | array | state.maps |
 | `zoneSets[]` | array | state.zoneSets |
+| `plannedPath` | object | state.plannedPath |
+| `intermediatePath` | object | state.intermediatePath |
+| `distanceSinceLastNode` | number | state.distanceSinceLastNode |
+| `newBaseRequest` | boolean | state.newBaseRequest |
+| `zoneRequests[]` | array | state.zoneRequests |
+| `edgeRequests[]` | array | state.edgeRequests |
+
+The `newBaseRequest`, `zoneRequests`, and `edgeRequests` fields are exposed as read-only observation of the robot's pending control requests. The actual grant/revoke responses are handled by the Fleet Control API via the `responses` topic and are not in scope of this HTTP API.
 
 ### Order Management Metadata
 
