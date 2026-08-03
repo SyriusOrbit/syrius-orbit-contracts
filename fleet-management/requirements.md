@@ -189,6 +189,7 @@ Supports all VDA5050 predefined actions with extension capability:
 ### Factsheet
 
 The `GET /robots/{robotId}/factsheet` endpoint returns the **complete VDA5050 factsheet schema** including:
+- `protocolVersion` (mapped from the VDA5050 factsheet message header `version`)
 - `typeSpecification`
 - `physicalParameters`
 - `protocolLimits`
@@ -196,6 +197,8 @@ The `GET /robots/{robotId}/factsheet` endpoint returns the **complete VDA5050 fa
 - `mobileRobotGeometry`
 - `loadSpecification`
 - `mobileRobotConfiguration`
+
+The `headerId` is not exposed (RESTful design pattern), and `timestamp` is mapped to `lastUpdatedAt`. The mapping follows the same header-to-field pattern as RobotDetail.
 
 Data update mechanism (cache refresh, factsheetRequest trigger) is an implementation detail not specified at the API level.
 
@@ -219,6 +222,31 @@ Zone types reference the VDA5050 standard definition:
 - `PENALTY`
 - `DIRECTED`
 - `BIDIRECTED`
+
+### Zone Fields
+
+The `Zone` schema in the Fleet Management API includes the following fields:
+
+**Base fields (from VDA5050 zone definition):**
+- `zoneId` - Locally unique zone identifier within the zone set
+- `zoneType` - Zone category (see Zone Type Enumeration above)
+- `zoneDescriptor` - User-defined, human-readable name or descriptor
+- `vertices` - Array of vertices defining the geometrical shape
+
+**Context fields (from VDA5050 zoneSet wrapper):**
+- `zoneSetId` - Globally unique identifier of the zone set that this zone belongs to
+- `zoneSetDescriptor` - Human-readable name or descriptor of the zone set
+
+**Conditional fields (depending on zoneType):**
+- `releaseLossBehavior` - Required for `RELEASE` zones
+- `maximumSpeed` - Required for `SPEED_LIMIT` zones
+- `entryActions`, `duringActions`, `exitActions` - Required for `ACTION` zones
+- `priorityFactor` - Required for `PRIORITY` zones
+- `penaltyFactor` - Required for `PENALTY` zones
+- `direction`, `directedLimitation` - Required for `DIRECTED` zones
+- `direction`, `bidirectedLimitation` - Required for `BIDIRECTED` zones
+
+The `zoneSetId` and `zoneSetDescriptor` fields provide context from the VDA5050 zoneSet wrapper object, which groups related zones together. This allows operators to understand which zone set a zone belongs to without requiring an additional API call.
 
 ### Action Status Enumeration
 

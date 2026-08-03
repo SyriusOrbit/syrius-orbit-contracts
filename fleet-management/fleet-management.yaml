@@ -1500,13 +1500,15 @@ components:
       type: object
       description: |-
         Management view of the VDA 5050 factsheet. VDA 5050 MQTT transport
-        header fields (`headerId`, `timestamp`, `version`) are not surfaced;
-        `lastUpdatedAt` provides the cache freshness timestamp. The robot
-        identity fields `manufacturer` and `serialNumber` are preserved per
-        the VDA 5050 factsheet schema.
+        header fields (`headerId`) is not surfaced; `lastUpdatedAt` provides
+        the cache freshness timestamp. The protocol version is mapped as
+        `protocolVersion`, consistent with the RobotDetail mapping pattern.
+        The robot identity fields `manufacturer` and `serialNumber` are
+        preserved per the VDA 5050 factsheet schema.
       required:
         - manufacturer
         - serialNumber
+        - protocolVersion
         - typeSpecification
         - physicalParameters
         - protocolLimits
@@ -1521,6 +1523,10 @@ components:
         serialNumber:
           type: string
           description: Serial number of the mobile robot, preserved from the VDA 5050 factsheet.
+        protocolVersion:
+          type: string
+          description: VDA 5050 protocol version, sourced from the VDA 5050 factsheet message header `version`.
+          examples: [2.0.0]
         typeSpecification:
           $ref: '#/components/schemas/TypeSpecification'
         physicalParameters:
@@ -2760,8 +2766,8 @@ components:
       type: object
       description: |-
         Zone following the VDA 5050 zoneSet schema. The base fields
-        (`zoneId`, `zoneType`, `vertices`, `zoneDescriptor`) are always
-        present. Zone-type-specific conditional fields
+        (`zoneId`, `zoneType`, `vertices`, `zoneSetId`, `zoneSetDescriptor`)
+        are always present. Zone-type-specific conditional fields
         (`releaseLossBehavior`, `maximumSpeed`, `entryActions`,
         `duringActions`, `exitActions`, `priorityFactor`, `penaltyFactor`,
         `direction`, `directedLimitation`, `bidirectedLimitation`) are
@@ -2780,6 +2786,10 @@ components:
 
         Clients and servers should enforce these requirements at the
         application layer.
+
+        `zoneSetId` and `zoneSetDescriptor` are context fields sourced from
+        the VDA 5050 zoneSet wrapper object, providing the zone set grouping
+        that this zone belongs to.
       required:
         - zoneId
         - zoneType
@@ -2793,6 +2803,18 @@ components:
         zoneDescriptor:
           type: string
           description: User-defined, human-readable name or descriptor.
+        zoneSetId:
+          type: string
+          description: |-
+            Globally unique identifier of the zone set that this zone belongs
+            to, sourced from the VDA 5050 zoneSet object.
+          examples: [3F-Warehouse-Zones]
+        zoneSetDescriptor:
+          type: string
+          description: |-
+            Human-readable name or descriptor of the zone set that this zone
+            belongs to, sourced from the VDA 5050 zoneSet object.
+          examples: [3rd Floor Warehouse Zones]
         vertices:
           type: array
           minItems: 3
