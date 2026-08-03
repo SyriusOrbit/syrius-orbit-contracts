@@ -95,6 +95,7 @@ A change is complete only when all checks below pass:
 - Do not rewrite large sections when a scoped edit is sufficient.
 - Do not invent unsupported product features or standards claims.
 - If a required detail is unknown, keep behavior conservative and note the assumption explicitly.
+- Before committing or pushing changes, must get explicit user confirmation. Do not commit or push without user approval.
 
 ## Language Policy (Mandatory)
 
