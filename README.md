@@ -6,6 +6,12 @@
 
 This repository is the single source of truth for all API contracts used across the platform.
 
+## API Documentation
+
+All human-readable HTML documentation generated from the OpenAPI and AsyncAPI contracts is published via GitHub Pages at:
+
+**https://syriusorbit.github.io/syrius-orbit-contracts/**
+
 The repository defines three API suites:
 
 - SyriusOrbit Spatial API: the OpenAPI-based contract suite for spatial data and geospatial services, aligned with the OGC API family.

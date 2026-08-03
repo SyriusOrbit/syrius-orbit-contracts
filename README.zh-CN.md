@@ -4,6 +4,12 @@
 
 本仓库是平台中所有 API 契约的唯一事实来源。
 
+## API 文档
+
+所有由 OpenAPI 和 AsyncAPI 契约生成的、可供人类阅读的 HTML 文档均通过 GitHub Pages 发布，链接如下：
+
+**https://syriusorbit.github.io/syrius-orbit-contracts/**
+
 本仓库定义了三套 API：
 
 - SyriusOrbit Spatial API：基于 OpenAPI 的契约套件，用于空间数据与地理信息服务，并与 OGC API 系列保持一致。
