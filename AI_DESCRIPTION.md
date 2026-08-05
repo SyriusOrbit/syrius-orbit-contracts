@@ -65,7 +65,7 @@ This project intentionally reduces that flexibility for SyriusOrbit scenarios by
 
 Authoring guidance:
 
-- Use OGC official examples in the `ogc_official_examples/` directory as primary style and structure references
+- Use OGC official examples in the `standards/ogc/` directory as primary style and structure references
 - Keep SyriusOrbit YAML files as close as practical to those example authoring conventions
 - Apply project-specific strict constraints when multiple standard-compliant modeling choices are possible
 
