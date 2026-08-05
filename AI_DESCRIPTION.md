@@ -116,3 +116,27 @@ Before finalizing any change, confirm all items below:
 - Authoring rules (`format`, `date-time`, `operationId`, status codes) are satisfied
 - Output text is fully English
 - Change summary is explicit and limited to actual edits
+
+## Backlog Workflow
+
+The repository maintains a structured backlog of known gaps, issues, and improvement items in `docs/backlog/`. Before starting any work, agents should:
+
+1. **Scan `docs/backlog/README.md`** for available items with `status: open`.
+2. **Claim an item** by setting `status` to `in-progress` in the item file's YAML frontmatter.
+3. **Implement the fix** following the item's "Definition of Done" checklist.
+4. **Verify completion** by ensuring all checklist items are checked and the work passes validation.
+5. **Mark done** by setting `status` to `done` in the item file's YAML frontmatter.
+
+New backlog items should be created as individual Markdown files in `docs/backlog/` with the following YAML frontmatter:
+
+```yaml
+id: P0-001          # Priority-level + sequence number
+title: Short description
+priority: P0        # P0 (critical), P1 (important), P2 (minor)
+status: open        # open, in-progress, done, blocked
+area: fleet-control # fleet-management, fleet-control, spatial, cross
+effort: medium      # low, medium, high
+depends-on:         # Comma-separated item IDs that must be done first
+```
+
+Each item body should contain: Problem description, Affected Files, Definition of Done checklist, and optional Notes.
