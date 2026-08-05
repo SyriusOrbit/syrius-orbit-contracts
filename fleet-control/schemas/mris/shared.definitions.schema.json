@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shared.definitions.schema.json",
+  "title": "MRIS Shared Definitions",
+  "description": "Shared type definitions for the MassRobotics AMR Interoperability Standard (MRIS).",
+  "definitions": {
+    "quaternion": {
+      "description": "Quaternion representation of a rotation angle",
+      "type": "object",
+      "required": ["x", "y", "z", "w"],
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "z": { "type": "number", "format": "double" },
+        "w": { "type": "number", "format": "double" }
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "description": "Location of an object or AMR",
+      "type": "object",
+      "required": ["x", "y", "angle", "planarDatum"],
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "z": {
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "angle": { "$ref": "#/definitions/quaternion" },
+        "planarDatum": {
+          "description": "Id of planarDatum AMR is referencing",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "predictedLocation": {
+      "description": "Predicted future location of an object or AMR",
+      "type": "object",
+      "required": ["timestamp", "x", "y", "angle"],
+      "properties": {
+        "timestamp": {
+          "description": "Predicted UTC time AMR will reach this location",
+          "type": "string",
+          "format": "date-time"
+        },
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "z": {
+          "type": "number",
+          "format": "double",
+          "default": 0
+        },
+        "angle": { "$ref": "#/definitions/quaternion" },
+        "planarDatumUUID": {
+          "description": "Only necessary if different from AMR's current planarDatum",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "envelope": {
+      "description": "Physical footprint or cargo volume dimensions",
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "z": {
+          "type": "number",
+          "format": "double",
+          "default": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

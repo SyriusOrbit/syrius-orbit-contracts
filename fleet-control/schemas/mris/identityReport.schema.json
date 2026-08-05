@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "identityReport.schema.json",
+  "title": "MRIS Identity Report",
+  "description": "Robot identity and capability information published on connection or when robot info changes.",
+  "type": "object",
+  "required": ["uuid", "timestamp", "manufacturerName", "robotModel", "robotSerialNumber", "baseRobotEnvelope"],
+  "properties": {
+    "uuid": {
+      "description": "RFC 4122 UUID identifying the robot. All subsequent messages must reference this UUID.",
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "description": "Report timestamp in RFC 3339 date-time format",
+      "type": "string",
+      "format": "date-time"
+    },
+    "manufacturerName": {
+      "description": "Name of the robot manufacturer",
+      "type": "string"
+    },
+    "robotModel": {
+      "description": "Model designation of the robot",
+      "type": "string"
+    },
+    "robotSerialNumber": {
+      "description": "Unique robot identifier that ideally can be physically linked to the AMR",
+      "type": "string"
+    },
+    "baseRobotEnvelope": {
+      "description": "Physical footprint of the robot centered on current location",
+      "$ref": "./shared.definitions.schema.json#/definitions/envelope"
+    },
+    "maxSpeed": {
+      "description": "Maximum robot speed in m/s",
+      "type": "number",
+      "format": "double"
+    },
+    "maxRunTime": {
+      "description": "Estimated maximum runtime in hours",
+      "type": "number",
+      "format": "double"
+    },
+    "emergencyContactInformation": {
+      "description": "Emergency contact information, preferably a phone number",
+      "type": "string"
+    },
+    "chargerType": {
+      "description": "Type of charger used by the robot",
+      "type": "string"
+    },
+    "supportVendorName": {
+      "description": "Name of the vendor that supplied the robot",
+      "type": "string"
+    },
+    "supportVendorContactInformation": {
+      "description": "Contact information for the vendor",
+      "type": "string"
+    },
+    "productDocumentation": {
+      "description": "Link to product documentation",
+      "type": "string",
+      "format": "uri"
+    },
+    "thumbnailImage": {
+      "description": "Link to a thumbnail graphic stored as PNG",
+      "type": "string",
+      "format": "uri"
+    },
+    "cargoType": {
+      "description": "Description of cargo the robot can carry",
+      "type": "string"
+    },
+    "cargoMaxVolume": {
+      "description": "Maximum cargo volume in meters",
+      "$ref": "./shared.definitions.schema.json#/definitions/envelope"
+    },
+    "cargoMaxWeight": {
+      "description": "Maximum cargo weight in kg",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

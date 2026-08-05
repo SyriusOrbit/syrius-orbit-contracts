@@ -27,7 +27,7 @@ info:
 defaultContentType: application/json
 servers:
   edge:
-    host: '{edgeHost}:{edgePort}'
+    host: '{edgeHost}'
     protocol: ws
     protocolVersion: RFC 6455
     description: |
@@ -36,10 +36,8 @@ servers:
     variables:
       edgeHost:
         default: localhost
-      edgePort:
-        default: '8084'
   cloud:
-    host: '{cloudHost}:{cloudPort}'
+    host: '{cloudHost}'
     protocol: wss
     protocolVersion: RFC 6455
     description: |
@@ -48,8 +46,6 @@ servers:
     variables:
       cloudHost:
         default: mris.cloud.syriusorbit.com
-      cloudPort:
-        default: '8443'
 channels:
   mris:
     address: '/mris/{robotUuid}'
@@ -113,7 +109,7 @@ components:
         connection and whenever the robot's information changes.
       contentType: application/json
       payload:
-        $ref: ../standards/AMR_Interop_Standard/json_schemas/identityReport.schema.json
+        $ref: ./schemas/mris/identityReport.schema.json
 
     StatusReportMessage:
       name: statusReport
@@ -128,4 +124,4 @@ components:
         planned destinations, and short-term path.
       contentType: application/json
       payload:
-        $ref: ../standards/AMR_Interop_Standard/json_schemas/statusReport.schema.json
+        $ref: ./schemas/mris/statusReport.schema.json

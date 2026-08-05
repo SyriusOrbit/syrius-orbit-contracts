@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "statusReport.schema.json",
+  "title": "MRIS Status Report",
+  "description": "Real-time robot state, location, and operational status published periodically during operation.",
+  "type": "object",
+  "required": ["uuid", "timestamp", "operationalState", "location"],
+  "properties": {
+    "uuid": {
+      "description": "RFC 4122 UUID of the AMR. Must match the UUID declared in the identityReport.",
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "description": "Report timestamp in RFC 3339 date-time format",
+      "type": "string",
+      "format": "date-time"
+    },
+    "operationalState": {
+      "description": "Current action the robot is performing",
+      "type": "string",
+      "enum": [
+        "navigating",
+        "idle",
+        "disabled",
+        "offline",
+        "charging",
+        "waitingHumanEvent",
+        "waitingExternalEvent",
+        "waitingInternalEvent",
+        "manualOverride"
+      ]
+    },
+    "location": {
+      "description": "Current location of the AMR",
+      "$ref": "./shared.definitions.schema.json#/definitions/location"
+    },
+    "velocity": {
+      "description": "Current velocity of the AMR",
+      "type": "object",
+      "required": ["linear"],
+      "properties": {
+        "linear": {
+          "description": "Linear velocity in m/s in heading direction, forward is positive",
+          "type": "number",
+          "format": "double"
+        },
+        "angular": {
+          "description": "Angular velocity as quaternion per second",
+          "$ref": "./shared.definitions.schema.json#/definitions/quaternion"
+        }
+      },
+      "additionalProperties": false
+    },
+    "batteryPercentage": {
+      "description": "Percentage of battery remaining (0-100)",
+      "type": "number",
+      "format": "double",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "remainingRunTime": {
+      "description": "Estimated remaining runtime in hours",
+      "type": "number",
+      "format": "double",
+      "minimum": 0
+    },
+    "loadPercentageStillAvailable": {
+      "description": "Percentage of cargo capacity still available (0-100)",
+      "type": "number",
+      "format": "double",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "errorCodes": {
+      "description": "List of current error states. Should be omitted for normal operation.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "destinations": {
+      "description": "Target destination(s) of the AMR",
+      "type": "array",
+      "items": {
+        "$ref": "./shared.definitions.schema.json#/definitions/predictedLocation"
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "path": {
+      "description": "Short-term predicted path of the AMR (~10 seconds)",
+      "type": "array",
+      "items": {
+        "$ref": "./shared.definitions.schema.json#/definitions/predictedLocation"
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}
