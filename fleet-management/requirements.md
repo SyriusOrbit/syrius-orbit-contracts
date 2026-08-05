@@ -18,13 +18,16 @@ The core resources are:
 - `robot`
 - `order`
 - `map`
+- `zoneSet`
+- `navigationGraph`
 - `instantAction`
 
 Resource scope:
 
 - `robot` represents the mobile robot in VDA5050 terminology.
 - `order` follows VDA5050 order semantics. This API defines the management-side creation and read views for orders, while execution and state propagation are handled through Fleet Control.
-- `map` represents spatial reference data and is split into `navigation graph` and `zone`.
+- `map`, `zoneSet`, and `navigationGraph` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. They are independent top-level resources.
+- `zone` belongs to `zoneSet`, not to `map`.
 - `instantAction` is the command surface for predefined actions such as `cancelOrder` and `factsheetRequest`, matching the VDA5050 instant action concept.
 - `factsheet` is communicated by the mobile robot after a `factsheetRequest` instant action and is not modeled as a standalone primary resource.
 - Errors and warnings are represented as part of mobile robot state and information, not as a separate alert resource.
@@ -33,15 +36,17 @@ Resource scope:
 
 The API should support:
 
-- Listing robots
+- Listing robots (all sites, with optional `siteId` and `unbound` filters)
 - Retrieving robot details
-- Listing orders
+- Creating robots (with or without site binding)
+- Listing orders (all sites, with optional `siteId` filter)
 - Retrieving order details
-- Creating orders
-- Retrieving fleet overview data
-- Querying maps
-- Querying navigation graphs
-- Querying zones
+- Creating orders (site-bound, via site path)
+- Retrieving fleet overview data (per site)
+- Querying maps (per site, read-only translation)
+- Querying zone sets (per site, read-only translation)
+- Querying zones (under a zone set)
+- Querying navigation graphs (per site, read-only translation)
 - Triggering predefined instant actions such as `cancelOrder` and `factsheetRequest`
 
 ## Non-Goals
@@ -56,8 +61,9 @@ The following areas are out of scope for this API:
 
 ## Data Freshness
 
-- Data should be near real time.
+- Operational data (robot state, order status) should be near real time.
 - A delay of a few seconds is acceptable.
+- Translation views (map, zoneSet, navigationGraph) are translated in real time from the Spatial API on each read request.
 - Real-time behavior will be handled by asynchronous APIs, not by this OpenAPI contract.
 
 ## Schema Compatibility Principles
@@ -73,6 +79,60 @@ The Fleet Management API should stay compatible with VDA5050 at the schema and c
 - Robot state views should reuse VDA5050 state field names when they expose the same concept, such as `orderId`, `orderUpdateId`, `lastNodeId`, `lastNodeSequenceId`, `nodeStates`, `edgeStates`, `actionStates`, `instantActionStates`, `zoneActionStates`, `mobileRobotPosition`, `powerSupply`, `operatingMode`, `errors`, `information`, and `safetyState`.
 
 Fleet Management may expose only a subset of these fields in a given view, but it should not rename a VDA5050 concept into a different schema name when the meaning is the same.
+
+## Site Scope and Routing
+
+### Site Semantics
+
+Fleet Management is a cross-site deployment. Site is a **filtering dimension** (mutable context state), not a namespace identifier. This differs from the Spatial API where site is a namespace (ID composition part).
+
+- Robot identifiers (`manufacturer.serialNumber`) are globally unique across sites.
+- `siteId` on a robot is a mutable logical attribute that must be consistent with physical position.
+- Orphan robots (`siteId = null`) are a valid business state, occurring during pre-registration, migration, import, or site deletion cascade.
+
+### Resource Site Affinity Classification
+
+| Category | Resources | Site Affinity | Orphan Possible |
+|---|---|---|---|
+| Movable resources | `robot`, `instantAction` | Site ID is mutable state | Yes (robot only) |
+| Strong-bound resources | `order` | Site ID required at creation, immutable | No |
+| Translation views | `map`, `zoneSet`, `navigationGraph` | Site ID always present (from Spatial collection) | No |
+
+### Read vs Write Interface Patterns
+
+**Read interfaces** — site prefix acts as filter:
+- Movable resources: both `/resource` (all sites, including orphans) and `/sites/{siteId}/resource` (equivalent to `?siteId=xxx`, no orphans) are provided
+- Strong-bound resources: both `/resource` (all sites) and `/sites/{siteId}/resource` are provided
+- Translation views: only `/sites/{siteId}/resource` path style, no global listing
+- Fleet overview: only `/sites/{siteId}/fleet/overview`, site context required
+
+**Write interfaces** — site prefix acts as enforcement:
+- Strong-bound resources (`order`): `POST /sites/{siteId}/orders` — site ID enforced in path
+- Movable resources (`robot`): `POST /robots` (can create orphan) vs `POST /sites/{siteId}/robots` (already bound) — two write paths with different semantics
+- `PATCH /robots/{robotId}` for changing `siteId`: fully free (null↔siteId), enabling orphan binding, cross-site migration, and voluntary orphan creation
+- `instantAction` and `factsheet`: no site prefix, follow robot
+
+### Operation Gate Rules
+
+Operations that require site binding are enforced at API level (rejected on creation), not just at execution level:
+
+- **Orders**: `siteId` must be specified in path at creation time and is immutable thereafter
+- **Instant Actions**: classified by type. Site-bound types (order-related, map-related, zone-related, physical work) require robot site affiliation on creation. Non-site-bound types (robot self-maintenance, e.g., MQTT cert rotation) do not
+- **Factsheet**: no site requirement; it is a robot self-observation
+- **Robot site migration**: `PATCH siteId` requires robot to be idle (no executing order/instantAction)
+
+### Translation Resources
+
+`map`, `zoneSet`, and `navigationGraph` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. They are independent top-level resources, not sub-resources of each other:
+
+- Each maps to a distinct Spatial collection under the same site
+- `zoneSet` and `navigationGraph` are peer resources alongside `map`, not nested under `map`
+- Fleet Management stores only lightweight metadata (source collection mapping), not content
+- `zone` belongs to `zoneSet`, not to `map`
+
+### Site Management
+
+Site is identified by a single ID with no additional data. Site CRUD is managed by the Spatial API; Fleet Management only references `siteId`. Site deletion is controlled and requires full cleanup: robots must be migrated away, orders completed/canceled, and translation relationships removed.
 
 ## VDA5050 Mapping Specification
 
@@ -114,6 +174,7 @@ Contains high-frequency query fields from VDA5050 state:
 | Field | Type | VDA5050 Source |
 |---|---|---|
 | `robotId` | string | Composed from manufacturer.serialNumber |
+| `siteId` | string | Management-side logical site assignment. Null for orphan robots. |
 | `displayName` | string | Management-side field |
 | `connectionState` | enum | connection.connectionState |
 | `operatingMode` | enum | state.operatingMode |
@@ -130,6 +191,7 @@ Contains complete VDA5050 state plus management metadata:
 | Field | Type | VDA5050 Source |
 |---|---|---|
 | All RobotSummary fields | - | - |
+| `siteId` | string | Management-side logical site assignment. Null for orphan robots. Mutable via PATCH. |
 | `manufacturer` | string | header.manufacturer |
 | `serialNumber` | string | header.serialNumber |
 | `protocolVersion` | string | header.version |
@@ -164,11 +226,18 @@ HTTP API adds minimal management metadata to VDA5050 order structure:
 
 | Added Field | Type | Description |
 |---|---|---|
+| `siteId` | string | Site identifier. Required at creation via `POST /sites/{siteId}/orders` and immutable thereafter. |
 | `createdAt` | date-time | Order creation timestamp |
 | `status` | enum | Order status: QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELED |
 | `assignedRobotId` | string | Robot assigned to execute the order |
 
 The underlying order content (orderId, orderUpdateId, nodes, edges, actions) remains fully VDA5050-compatible.
+
+### Order Site Binding
+
+Order `siteId` is enforced at creation time via the site path (`POST /sites/{siteId}/orders`) and is immutable for the lifetime of the order. Orders cannot be reassigned to a different site. If a robot needs to execute work in a different site, the robot must migrate first, then a new order must be created in the target site.
+
+Order execution requires that the assigned robot's `siteId` matches the order's `siteId` at execution time. Cross-site execution is not allowed and violates the "sites are independent" principle.
 
 ### Instant Actions
 
@@ -185,6 +254,24 @@ Supports all VDA5050 predefined actions with extension capability:
 - Other VDA5050 predefined actions as specified in the standard
 
 **Extension:** Custom actions defined by robot manufacturers are allowed and should follow the VDA5050 action schema (actionId, actionType, blockingType, actionParameters).
+
+### Instant Action Gate Classification
+
+Instant actions are classified into two categories based on whether they require the robot to be affiliated with a site at creation time:
+
+**Site-bound actions** (robot must have a `siteId`):
+- Order-related: `cancelOrder`, `startPause`, `stopPause` (the referenced order belongs to a site)
+- Map-related: actions that reference map data
+- Zone-related: actions that reference zone data
+- Physical work: actions that cause physical robot movement or manipulation
+
+**Non-site-bound actions** (robot may be orphan):
+- Robot self-maintenance: e.g., MQTT certificate rotation, software update
+- Pure information queries: e.g., `factsheetRequest` (no site requirement for robot self-observation)
+
+For site-bound actions, the API rejects creation if the robot's `siteId` is null (orphan). For non-site-bound actions, no site check applies.
+
+Manufacturer-defined custom actions default to site-bound. Manufacturers can declare non-site-bound actions by marking them explicitly.
 
 ### Factsheet
 
@@ -204,9 +291,11 @@ Data update mechanism (cache refresh, factsheetRequest trigger) is an implementa
 
 ### Navigation Graph
 
-Navigation graph data for `GET /maps/{mapId}/navigation-graph` is sourced from the **Spatial API** (OGC API Features), not from VDA5050 order/state aggregation. This ensures consistency with the spatial data model.
+Navigation graph data is sourced from the **Spatial API** (OGC API Features) as a read-only translation view, not from VDA5050 order/state aggregation. It is a peer resource alongside `map` and `zoneSet`, not a sub-resource of `map`.
 
-Node and edge fields stay aligned with VDA 5050 order and state terminology where the same geometry concept is represented. Shared field names (such as `nodeId`, `edgeId`, `nodeDescriptor`, `orientation`, `orientationType`, `length`, `maximumSpeed`) match VDA 5050 exactly. However, VDA 5050 order-only dynamic fields (`sequenceId`, `released`) are omitted because they describe execution state, not static graph topology. Conversely, graph-structure fields (`startNodeId`, `endNodeId`) are added because they are required to express edge connectivity in a static navigation graph.
+Node and edge fields stay aligned with VDA5050 order and state terminology where the same geometry concept is represented. Shared field names (such as `nodeId`, `edgeId`, `nodeDescriptor`, `orientation`, `orientationType`, `length`, `maximumSpeed`) match VDA 5050 exactly. However, VDA 5050 order-only dynamic fields (`sequenceId`, `released`) are omitted because they describe execution state, not static graph topology. Conversely, graph-structure fields (`startNodeId`, `endNodeId`) are added because they are required to express edge connectivity in a static navigation graph.
+
+Navigation graph, `map`, and `zoneSet` are three independent translation resources, each mapping to a distinct Spatial collection. They share the same `siteId` context but are not nested under each other.
 
 ### Zone Type Enumeration
 
@@ -225,7 +314,7 @@ Zone types reference the VDA5050 standard definition:
 
 ### Zone Fields
 
-The `Zone` schema in the Fleet Management API includes the following fields:
+The `Zone` schema in the Fleet Management API includes the following fields. Zone is a sub-resource of `zoneSet`, not of `map`.
 
 **Base fields (from VDA5050 zone definition):**
 - `zoneId` - Locally unique zone identifier within the zone set
@@ -247,6 +336,8 @@ The `Zone` schema in the Fleet Management API includes the following fields:
 - `direction`, `bidirectedLimitation` - Required for `BIDIRECTED` zones
 
 The `zoneSetId` and `zoneSetDescriptor` fields provide context from the VDA5050 zoneSet wrapper object, which groups related zones together. This allows operators to understand which zone set a zone belongs to without requiring an additional API call.
+
+Zone set is a peer translation resource alongside `map` and `navigationGraph`, sourcing from a distinct Spatial collection. A site may have multiple zone sets.
 
 ### Action Status Enumeration
 
@@ -274,57 +365,64 @@ The next design step is to translate these requirements into a resource model an
 
 This is a rough path design based on the current requirements. It is intentionally minimal and should be refined together with the resource model.
 
+### Site prefix convention
+
+- `/sites/{siteId}/` acts as a filter on read paths (equivalent to `?siteId=xxx`)
+- `/sites/{siteId}/` acts as an enforcement on write paths
+- Translation views only use `/sites/{siteId}/` path style (no global listing)
+- `?unbound=true` on `/robots` returns only orphan robots
+
 ### Robot-related paths
 
-- `GET /robots` - list robots
+- `GET /robots` - list all robots across all sites, including orphans
+- `GET /robots?siteId={siteId}` - list robots filtered by site (equivalent to `/sites/{siteId}/robots`)
+- `GET /robots?unbound=true` - list only orphan robots
+- `GET /sites/{siteId}/robots` - list robots for a specific site (no orphans, equivalent to `GET /robots?siteId=xxx`)
 - `GET /robots/{robotId}` - get robot detail
-- `GET /robots/{robotId}/factsheet` - get robot factsheet data as a robot-related view
+- `POST /robots` - create a robot (can be orphan if `siteId` not provided)
+- `POST /sites/{siteId}/robots` - create a robot with site binding
+- `PATCH /robots/{robotId}` - update robot mutable fields including `siteId`
+- `GET /robots/{robotId}/factsheet` - get robot factsheet (no site requirement)
+- `GET /robots/{robotId}/instant-actions` - list instant actions for a robot
+- `POST /robots/{robotId}/instant-actions` - trigger an instant action (gate by action type, see Operation Gate Rules)
+- `GET /robots/{robotId}/instant-actions/{instantActionId}` - get instant action detail
 
 ### Order-related paths
 
-- `GET /orders` - list orders
+- `GET /orders` - list all orders across all sites
+- `GET /orders?siteId={siteId}` - list orders filtered by site (equivalent to `/sites/{siteId}/orders`)
+- `GET /sites/{siteId}/orders` - list orders for a specific site (equivalent to `GET /orders?siteId=xxx`)
 - `GET /orders/{orderId}` - get order detail
-- `POST /orders` - create an order for management submission
+- `POST /sites/{siteId}/orders` - create an order for a specific site (site ID enforced in path, immutable after creation)
 
-### Order schema notes
+### Map-related paths (translation views, read-only)
 
-- The creation payload should accept the VDA5050-compatible order structure rather than a simplified custom order shape.
-- Order summary and detail views may add management metadata, but the underlying order content should remain VDA5050-compatible.
+- `GET /sites/{siteId}/maps` - list maps for a site
+- `GET /sites/{siteId}/maps/{mapId}` - get map detail
 
-### Instant action paths
+### Zone set-related paths (translation views, read-only)
 
-- `POST /robots/{robotId}/instant-actions` - trigger an instant action such as `cancelOrder` or `factsheetRequest`
-- `GET /robots/{robotId}/instant-actions` - list instant actions for a robot state view, if history is exposed
-- `GET /robots/{robotId}/instant-actions/{instantActionId}` - get instant action detail from the robot state view, if needed
+- `GET /sites/{siteId}/zonesets` - list zone sets for a site
+- `GET /sites/{siteId}/zonesets/{zoneSetId}` - get zone set detail
+- `GET /sites/{siteId}/zonesets/{zoneSetId}/zones` - list zones under a zone set
+- `GET /sites/{siteId}/zonesets/{zoneSetId}/zones/{zoneId}` - get zone detail
 
-### Instant action schema notes
+### Navigation graph-related paths (translation views, read-only)
 
-- Instant actions should be modeled as arrays of VDA5050 action objects.
-- The action fields should remain compatible with the VDA5050 action schema and action status model.
-
-### Map-related paths
-
-- `GET /maps` - list maps
-- `GET /maps/{mapId}` - get map detail
-- `GET /maps/{mapId}/navigation-graph` - get the navigation graph part of a map
-- `GET /maps/{mapId}/zones` - list zones under a map
-- `GET /maps/{mapId}/zones/{zoneId}` - get a specific zone
-
-### Map and zone schema notes
-
-- Map details should reuse VDA5050-compatible identifiers and status fields where they describe the same map concept.
-- Zones should follow the VDA5050 zone set structure, including zone identifiers, type, geometry vertices, and zone-specific actions when exposed.
-- If the management API exposes a navigation graph view, its node and edge fields should stay aligned with the VDA5050 order and state terminology rather than introducing a second naming scheme for the same geometry.
+- `GET /sites/{siteId}/navigationgraphs` - list navigation graphs for a site
+- `GET /sites/{siteId}/navigationgraphs/{navigationGraphId}` - get navigation graph detail
 
 ### Fleet overview paths
 
-- `GET /fleet/overview` - get fleet-level summary data
+- `GET /sites/{siteId}/fleet/overview` - get fleet overview for a specific site (site context required)
 
 ### Notes
 
 - `factsheet` is modeled as a robot-related view, not as a standalone primary resource.
 - `factsheet` follows VDA5050 factsheet communication semantics and is exposed here as a management view only.
-- `navigation graph` and `zone` are treated as map sub-resources.
-- `instantAction` is robot-scoped and triggered via `POST /robots/{robotId}/instant-actions`. Any history exposed under `robot` is treated as a robot state view.
-- `orders` are created and managed in this API using VDA5050-aligned order concepts. Execution and robot-side lifecycle remain in Fleet Control.
+- `map`, `zoneSet`, and `navigationGraph` are peer translation resources, each mapping to a distinct Spatial collection.
+- `zone` belongs to `zoneSet`, not to `map`.
+- `instantAction` is robot-scoped and triggered via `POST /robots/{robotId}/instant-actions`. Gate rules apply at creation time.
+- `orders` are created via site-scoped paths and managed in this API using VDA5050-aligned order concepts. Execution and robot-side lifecycle remain in Fleet Control.
+- Robot `siteId` is mutable via `PATCH /robots/{robotId}`; consistency with physical position should be maintained.
 - This outline keeps the first version focused on management views and order submission, with control actions separated from robot-side execution behavior.

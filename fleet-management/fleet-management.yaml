@@ -1,14 +1,23 @@
 openapi: 3.1.0
 info:
   title: SyriusOrbit Fleet Management API
-  version: 0.1.1
+  version: 0.2.0
   description: |-
     OpenAPI definition of the SyriusOrbit Fleet Management API.
 
     This contract defines the HTTP management surface for fleet operators and
-    frontend operators. It exposes near-real-time operational visibility, order
+    frontend operators. It 
+    exposes near-real-time operational visibility, order
     submission, and predefined instant action control, while execution and
     state propagation remain in the Fleet Control API.
+
+    The API uses site-prefixed routing for resources that are scoped to a
+    physical or logical site. Site is a filtering dimension (mutable context
+    state), not a namespace identifier. Robots may exist as orphans (no site
+    affiliation) for pre-registration, migration preparation, and import
+    workflows. Orders and fleet overviews are always site-scoped. Map, zone set,
+    and navigation graph resources are read-only translation views sourced from
+    the Spatial API.
 
     Schema and concept compatibility follows VDA 5050 wherever the same
     business object is represented. VDA 5050 MQTT header fields are not
@@ -38,7 +47,11 @@ tags:
   - name: Orders
     description: VDA 5050-aligned order submission, monitoring, and detail views.
   - name: Maps
-    description: Map, navigation graph, and zone resources used for fleet visualization.
+    description: Map resources used for fleet visualization. Read-only translation views from Spatial API.
+  - name: ZoneSets
+    description: Zone set management - read-only translation views from Spatial API.
+  - name: NavigationGraphs
+    description: Navigation graph management - read-only translation views from Spatial API.
   - name: InstantActions
     description: Robot-scoped instant action execution and history.
   - name: Fleet
@@ -49,8 +62,11 @@ paths:
       tags:
         - Robots
       summary: List robots.
-      description: Retrieve the full list of robots currently known to the fleet management plane. This endpoint always returns the complete list and does not support pagination.
+      description: Retrieve the full list of robots currently known to the fleet management plane. Supports optional site filtering via ?siteId=xxx and orphan-only filtering via ?unbound=true. Always returns the complete list and does not support pagination.
       operationId: listRobots
+      parameters:
+        - $ref: '#/components/parameters/siteIdFilter'
+        - $ref: '#/components/parameters/unboundFilter'
       responses:
         '200':
           description: Robot list returned.
@@ -64,6 +80,7 @@ paths:
                     robots:
                       - robotId: Syrius.SOR-Carrier-001
                         displayName: Carrier 001
+                        siteId: site-warehouse-a
                         connectionState: ONLINE
                         operatingMode: AUTOMATIC
                         driving: false
@@ -73,6 +90,7 @@ paths:
                         lastUpdatedAt: '2026-07-29T09:30:00Z'
                       - robotId: Syrius.SOR-Carrier-002
                         displayName: Carrier 002
+                        siteId: null
                         connectionState: OFFLINE
                         operatingMode: MANUAL
                         driving: false
@@ -80,6 +98,37 @@ paths:
                         batteryLevel: 41.0
                         charging: false
                         lastUpdatedAt: '2026-07-29T09:18:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Robots
+      summary: Create a robot.
+      description: "Create a new robot resource. If siteId is provided in the request body, the robot is immediately affiliated with that site. If siteId is omitted or null, the robot is created as an orphan (unbound). Orphans are valid for pre-registration, migration preparation, and import workflows."
+      operationId: createRobot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCreateRequest'
+      responses:
+        '201':
+          description: Robot created.
+          headers:
+            Location:
+              description: URL of the created robot resource.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RobotDetail'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -99,6 +148,33 @@ paths:
       responses:
         '200':
           description: Robot detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RobotDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Robots
+      summary: Update a robot's mutable fields including siteId.
+      description: "Update a robot's mutable fields. The siteId field can be changed to bind an orphan (null→siteId), migrate between sites (siteId→siteId), or voluntarily unbind (siteId→null). Robot must be idle (no executing order or instant action) to change siteId."
+      operationId: updateRobot
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotUpdateRequest'
+      responses:
+        '200':
+          description: Robot updated.
           content:
             application/json:
               schema:
@@ -257,27 +333,24 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /orders:
+  /sites/{siteId}/robots:
     get:
       tags:
-        - Orders
-      summary: List orders.
-      description: Retrieve a paginated, filterable list of orders tracked by the fleet management plane.
-      operationId: listOrders
+        - Robots
+      summary: List robots for a specific site.
+      description: "List all robots affiliated with the specified site. Equivalent to GET /robots?siteId={siteId}. Does not include orphan robots."
+      operationId: listRobotsAtSite
       parameters:
+        - $ref: '#/components/parameters/siteId'
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
-        - $ref: '#/components/parameters/orderStatusFilter'
-        - $ref: '#/components/parameters/assignedRobotIdFilter'
-        - $ref: '#/components/parameters/createdAtFrom'
-        - $ref: '#/components/parameters/createdAtTo'
       responses:
         '200':
-          description: Order list returned.
+          description: Robot list returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderList'
+                $ref: '#/components/schemas/RobotList'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -286,39 +359,60 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - Orders
-      summary: Create an order.
-      description: |-
-        Submit a new VDA 5050-aligned order for management-side creation. The
-        request body carries the VDA 5050 order content
-        (`nodes`, `edges`, `actions`, optional `orderDescription`) plus the
-        management metadata `assignedRobotId`.
-
-        The server injects `orderId` and `orderUpdateId` set to `0` for a new
-        order, following the VDA 5050 convention. VDA 5050 MQTT header fields
-        (`headerId`, `timestamp`, `version`, `manufacturer`, `serialNumber`)
-        are not part of the HTTP request body and are populated by the Fleet
-        Control API when the order is dispatched to the robot.
-      operationId: createOrder
+        - Robots
+      summary: Create a robot affiliated with a site.
+      description: "Create a new robot resource that is immediately affiliated with the specified site. The siteId is enforced by the path. The robot cannot be created as an orphan via this endpoint."
+      operationId: createRobotAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderCreateRequest'
+              $ref: '#/components/schemas/RobotCreateRequest'
       responses:
         '201':
-          description: Order created.
+          description: Robot created.
           headers:
             Location:
-              description: URL of the created order resource.
+              description: URL of the created robot resource.
               schema:
                 type: string
                 format: uri
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderDetail'
+                $ref: '#/components/schemas/RobotDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: List orders.
+      description: Retrieve a paginated, filterable list of orders tracked by the fleet management plane. Supports optional site filtering via ?siteId=xxx.
+      operationId: listOrders
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/orderStatusFilter'
+        - $ref: '#/components/parameters/assignedRobotIdFilter'
+        - $ref: '#/components/parameters/createdAtFrom'
+        - $ref: '#/components/parameters/createdAtTo'
+        - $ref: '#/components/parameters/siteIdFilter'
+      responses:
+        '200':
+          description: Order list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderList'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -349,13 +443,77 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /maps:
+  /sites/{siteId}/orders:
+    get:
+      tags:
+        - Orders
+      summary: List orders for a specific site.
+      description: "List all orders for the specified site. Equivalent to GET /orders?siteId={siteId}."
+      operationId: listOrdersAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/orderStatusFilter'
+        - $ref: '#/components/parameters/assignedRobotIdFilter'
+        - $ref: '#/components/parameters/createdAtFrom'
+        - $ref: '#/components/parameters/createdAtTo'
+      responses:
+        '200':
+          description: Order list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Orders
+      summary: Create an order for a specific site.
+      description: "Submit a new VDA 5050-aligned order for management-side creation in the specified site. The siteId is enforced by the path and is immutable for the lifetime of the order. The assignedRobotId must belong to the same site at execution time."
+      operationId: createOrderAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '201':
+          description: Order created.
+          headers:
+            Location:
+              description: URL of the created order resource.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sites/{siteId}/maps:
     get:
       tags:
         - Maps
-      summary: List maps.
-      description: Retrieve the full list of maps known to the fleet management plane. This endpoint always returns the complete list and does not support pagination.
-      operationId: listMaps
+      summary: List maps for a site.
+      description: Retrieve the full list of maps for the specified site. Read-only translation views from Spatial API. This endpoint always returns the complete list and does not support pagination.
+      operationId: listMapsAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
       responses:
         '200':
           description: Map list returned.
@@ -370,14 +528,15 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /maps/{mapId}:
+  /sites/{siteId}/maps/{mapId}:
     get:
       tags:
         - Maps
-      summary: Get a map.
-      description: Retrieve the detail view for a single map resource.
-      operationId: getMap
+      summary: Get a map detail.
+      description: Retrieve the detail view for a single map resource scoped to a site. Read-only translation view from Spatial API.
+      operationId: getMapAtSite
       parameters:
+        - $ref: '#/components/parameters/siteId'
         - $ref: '#/components/parameters/mapId'
       responses:
         '200':
@@ -393,27 +552,22 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /maps/{mapId}/navigation-graph:
+  /sites/{siteId}/zonesets:
     get:
       tags:
-        - Maps
-      summary: Get the navigation graph of a map.
-      description: |-
-        Retrieve the navigation graph part of a map. The navigation graph data
-        is sourced from the Spatial API (OGC API Features), not from VDA 5050
-        order or state aggregation. Node and edge fields stay aligned with
-        VDA 5050 order and state terminology where the same geometry concept is
-        represented.
-      operationId: getMapNavigationGraph
+        - ZoneSets
+      summary: List zone sets for a site.
+      description: Retrieve the full list of zone sets for the specified site. Read-only translation views from Spatial API.
+      operationId: listZoneSetsAtSite
       parameters:
-        - $ref: '#/components/parameters/mapId'
+        - $ref: '#/components/parameters/siteId'
       responses:
         '200':
-          description: Navigation graph returned.
+          description: Zone set list returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NavigationGraph'
+                $ref: '#/components/schemas/ZoneSetList'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -421,15 +575,40 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /maps/{mapId}/zones:
+  /sites/{siteId}/zonesets/{zoneSetId}:
     get:
       tags:
-        - Maps
-      summary: List zones under a map.
-      description: Retrieve a paginated, filterable list of zones under a map.
-      operationId: listMapZones
+        - ZoneSets
+      summary: Get a zone set detail.
+      description: Retrieve the detail view for a single zone set resource scoped to a site. Read-only translation view from Spatial API.
+      operationId: getZoneSetAtSite
       parameters:
-        - $ref: '#/components/parameters/mapId'
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/zoneSetId'
+      responses:
+        '200':
+          description: Zone set detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneSetDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sites/{siteId}/zonesets/{zoneSetId}/zones:
+    get:
+      tags:
+        - ZoneSets
+      summary: List zones under a zone set.
+      description: Retrieve a paginated, filterable list of zones under a zone set for a specific site. Read-only translation views from Spatial API.
+      operationId: listZonesAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/zoneSetId'
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/zoneTypeFilter'
@@ -447,15 +626,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /maps/{mapId}/zones/{zoneId}:
+  /sites/{siteId}/zonesets/{zoneSetId}/zones/{zoneId}:
     get:
       tags:
-        - Maps
-      summary: Get a zone under a map.
-      description: Retrieve the detail view for a single zone under a map.
-      operationId: getMapZone
+        - ZoneSets
+      summary: Get a zone detail.
+      description: Retrieve the detail view for a single zone under a zone set for a specific site. Read-only translation view from Spatial API.
+      operationId: getZoneAtSite
       parameters:
-        - $ref: '#/components/parameters/mapId'
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/zoneSetId'
         - $ref: '#/components/parameters/zoneId'
       responses:
         '200':
@@ -471,13 +651,62 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /fleet/overview:
+  /sites/{siteId}/navigationgraphs:
+    get:
+      tags:
+        - NavigationGraphs
+      summary: List navigation graphs for a site.
+      description: Retrieve the full list of navigation graphs for the specified site. Read-only translation views from Spatial API.
+      operationId: listNavigationGraphsAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: Navigation graph list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationGraphList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sites/{siteId}/navigationgraphs/{navigationGraphId}:
+    get:
+      tags:
+        - NavigationGraphs
+      summary: Get a navigation graph detail.
+      description: Retrieve the detail view for a single navigation graph resource scoped to a site. Read-only translation view from Spatial API.
+      operationId: getNavigationGraphAtSite
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/navigationGraphId'
+      responses:
+        '200':
+          description: Navigation graph detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationGraph'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sites/{siteId}/fleet/overview:
     get:
       tags:
         - Fleet
-      summary: Get fleet overview.
-      description: Retrieve an aggregated overview of the fleet.
-      operationId: getFleetOverview
+      summary: Get fleet overview for a site.
+      description: Retrieve an aggregated overview of the fleet for a specific site. Site context is required.
+      operationId: getSiteFleetOverview
+      parameters:
+        - $ref: '#/components/parameters/siteId'
       responses:
         '200':
           description: Fleet overview returned.
@@ -488,6 +717,7 @@ paths:
               examples:
                 sample:
                   value:
+                    siteId: site-warehouse-a
                     robotCount: 12
                     onlineRobotCount: 10
                     activeOrderCount: 7
@@ -502,6 +732,41 @@ paths:
 
 components:
   parameters:
+    siteId:
+      name: siteId
+      in: path
+      required: true
+      description: Unique site identifier. Site is a filtering dimension (mutable context state), not a namespace identifier.
+      schema:
+        type: string
+    siteIdFilter:
+      name: siteId
+      in: query
+      required: false
+      description: Filter resources by site identifier.
+      schema:
+        type: string
+    unboundFilter:
+      name: unbound
+      in: query
+      required: false
+      description: When true, returns only resources with no site affiliation (orphan robots). Only applicable to robot listing.
+      schema:
+        type: boolean
+    zoneSetId:
+      name: zoneSetId
+      in: path
+      required: true
+      description: Unique zone set identifier.
+      schema:
+        type: string
+    navigationGraphId:
+      name: navigationGraphId
+      in: path
+      required: true
+      description: Unique navigation graph identifier.
+      schema:
+        type: string
     robotId:
       name: robotId
       in: path
@@ -805,6 +1070,10 @@ components:
           type: string
           description: Management-side display name.
           examples: [Carrier 001]
+        siteId:
+          type: string
+          nullable: true
+          description: Management-side logical site assignment. Null for orphan robots.
         connectionState:
           $ref: '#/components/schemas/ConnectionState'
         operatingMode:
@@ -856,6 +1125,10 @@ components:
             - powerSupply
             - safetyState
           properties:
+            siteId:
+              type: string
+              nullable: true
+              description: Management-side logical site assignment. Null for orphan robots.
             manufacturer:
               type: string
               description: Manufacturer of the mobile robot, sourced from the VDA 5050 message header.
@@ -945,7 +1218,7 @@ components:
               type: array
               description: Zone sets currently stored on the mobile robot, sourced from `state.zoneSets`.
               items:
-                $ref: '#/components/schemas/ZoneSetSummary'
+                $ref: '#/components/schemas/RobotZoneSetSummary'
             plannedPath:
               $ref: '#/components/schemas/PlannedPath'
             intermediatePath:
@@ -969,6 +1242,38 @@ components:
               description: Edge requests currently active on the mobile robot, sourced from `state.edgeRequests`. Empty array if no edge requests are active. Read-only observation; grant/revoke responses are handled by the Fleet Control API.
               items:
                 $ref: '#/components/schemas/EdgeRequest'
+
+    RobotCreateRequest:
+      type: object
+      description: Request body for creating a new robot resource.
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          description: Management-side display name for the robot.
+        siteId:
+          type: string
+          nullable: true
+          description: Site identifier. Null or omit to create as orphan.
+        manufacturer:
+          type: string
+          description: Manufacturer of the mobile robot.
+        serialNumber:
+          type: string
+          description: Serial number of the mobile robot.
+
+    RobotUpdateRequest:
+      type: object
+      description: Request body for updating a robot's mutable fields.
+      properties:
+        displayName:
+          type: string
+          description: Management-side display name for the robot.
+        siteId:
+          type: string
+          nullable: true
+          description: Site identifier. Set to null to make robot an orphan.
 
     MobileRobotPosition:
       type: object
@@ -1323,25 +1628,7 @@ components:
           type: boolean
           description: True if the protective field is violated.
 
-    MapSummary:
-      type: object
-      description: Map stored on the mobile robot, following the VDA 5050 state map schema.
-      required:
-        - mapId
-        - mapVersion
-        - mapStatus
-      properties:
-        mapId:
-          type: string
-        mapVersion:
-          type: string
-        mapDescriptor:
-          type: string
-          description: User-defined, human-readable name or descriptor.
-        mapStatus:
-          $ref: '#/components/schemas/MapStatus'
-
-    ZoneSetSummary:
+    RobotZoneSetSummary:
       type: object
       description: Zone set stored on the mobile robot, following the VDA 5050 state zoneSet schema.
       required:
@@ -2056,6 +2343,7 @@ components:
               maximumDeceleration:
                 type: number
                 format: double
+                minimum: 0
               pickTime:
                 type: number
                 format: double
@@ -2151,6 +2439,7 @@ components:
         - status
         - assignedRobotId
         - createdAt
+        - siteId
       properties:
         orderId:
           type: string
@@ -2176,6 +2465,10 @@ components:
           format: date-time
           description: Order creation timestamp.
           examples: ['2026-07-29T09:00:00Z']
+        siteId:
+          type: string
+          description: Site identifier. Immutable for the lifetime of the order.
+          examples: [site-warehouse-a]
         nodeCount:
           type: integer
           format: int64
@@ -2206,6 +2499,7 @@ components:
         - status
         - assignedRobotId
         - createdAt
+        - siteId
       properties:
         orderId:
           type: string
@@ -2242,6 +2536,10 @@ components:
           format: date-time
           description: Order creation timestamp.
           examples: ['2026-07-29T09:00:00Z']
+        siteId:
+          type: string
+          description: Site identifier. Immutable for the lifetime of the order.
+          examples: [site-warehouse-a]
 
     OrderCreateRequest:
       type: object
@@ -2638,6 +2936,10 @@ components:
           type: string
           description: Robot targeted by the instant action.
           examples: [Syrius.SOR-Carrier-001]
+        siteId:
+          type: string
+          nullable: true
+          description: Site context at creation time.
         createdAt:
           type: string
           format: date-time
@@ -2657,6 +2959,28 @@ components:
           items:
             $ref: '#/components/schemas/MapSummary'
 
+    MapSummary:
+      type: object
+      description: Map stored on the mobile robot, following the VDA 5050 state map schema.
+      required:
+        - mapId
+        - mapVersion
+        - mapStatus
+        - siteId
+      properties:
+        mapId:
+          type: string
+        mapVersion:
+          type: string
+        mapDescriptor:
+          type: string
+          description: User-defined, human-readable name or descriptor.
+        mapStatus:
+          $ref: '#/components/schemas/MapStatus'
+        siteId:
+          type: string
+          description: Site identifier.
+
     MapDetail:
       type: object
       description: |-
@@ -2666,6 +2990,7 @@ components:
         - mapId
         - mapVersion
         - mapStatus
+        - siteId
       properties:
         mapId:
           type: string
@@ -2678,6 +3003,9 @@ components:
           description: VDA 5050 map descriptor, a user-defined, human-readable name.
         mapStatus:
           $ref: '#/components/schemas/MapStatus'
+        siteId:
+          type: string
+          description: Site identifier.
 
     NavigationGraph:
       type: object
@@ -2748,6 +3076,86 @@ components:
           type: number
           format: double
           description: Permitted maximum speed on the edge in meters per second.
+
+    NavigationGraphSummary:
+      type: object
+      description: Summary of a navigation graph for site-scoped listing.
+      required:
+        - navigationGraphId
+        - siteId
+      properties:
+        navigationGraphId:
+          type: string
+          description: Unique navigation graph identifier.
+        siteId:
+          type: string
+          description: Site identifier.
+        navigationGraphDescriptor:
+          type: string
+          description: Human-readable name or descriptor.
+        nodeCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of nodes in the navigation graph.
+        edgeCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of edges in the navigation graph.
+
+    NavigationGraphList:
+      type: object
+      required:
+        - navigationGraphs
+      properties:
+        navigationGraphs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationGraphSummary'
+
+    ZoneSetSummary:
+      type: object
+      description: Summary of a zone set for site-scoped listing from Spatial API.
+      required:
+        - zoneSetId
+        - siteId
+      properties:
+        zoneSetId:
+          type: string
+          description: Unique identifier of the zone set.
+        siteId:
+          type: string
+          description: Site identifier.
+        zoneSetDescriptor:
+          type: string
+          description: Human-readable name or descriptor.
+        zoneCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of zones in the zone set.
+
+    ZoneSetDetail:
+      allOf:
+        - $ref: '#/components/schemas/ZoneSetSummary'
+        - type: object
+          properties:
+            zones:
+              type: array
+              description: Zones under this zone set.
+              items:
+                $ref: '#/components/schemas/Zone'
+
+    ZoneSetList:
+      type: object
+      required:
+        - zoneSets
+      properties:
+        zoneSets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneSetSummary'
 
     ZoneList:
       type: object
@@ -2901,6 +3309,7 @@ components:
         - activeOrderCount
         - queuedOrderCount
         - updatedAt
+        - siteId
       properties:
         robotCount:
           type: integer
@@ -2928,3 +3337,7 @@ components:
           type: string
           format: date-time
           examples: ['2026-07-29T09:30:00Z']
+        siteId:
+          type: string
+          description: Site identifier.
+          examples: [site-warehouse-a]
