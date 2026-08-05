@@ -64,7 +64,93 @@ The following areas are out of scope for this API:
 - Operational data (robot state, order status) should be near real time.
 - A delay of a few seconds is acceptable.
 - Translation views (map, zoneSet, navigationGraph) are translated in real time from the Spatial API on each read request.
-- Real-time behavior will be handled by asynchronous APIs, not by this OpenAPI contract.
+- Real-time behavior is handled by the WebSocket API (`/ws`), not by synchronous HTTP endpoints.
+
+## WebSocket Real-Time Data Streaming
+
+> **Interface Definition**: The WebSocket API is defined in `asyncapi.yaml` using AsyncAPI 3.0.0 specification. This `requirements.md` document provides the design rationale and requirements; the `asyncapi.yaml` file contains the formal contract.
+
+### Purpose
+
+The WebSocket endpoint (`/ws`) provides real-time streaming of MQTT messages from the Fleet Control API to browser clients. This enables live visualization of robot states, order progress, and other operational data without polling.
+
+### Connection Model
+
+- **Endpoint**: `ws://host/ws` (same server as HTTP API)
+- **Protocol**: WebSocket with JSON message format
+- **Default behavior**: After connecting, the client receives all MQTT messages from all robots and all sites
+
+### Supported MQTT Topics
+
+All VDA5050 MQTT topics are supported:
+
+| Topic | Description |
+|---|---|
+| `state` | Robot state reports |
+| `order` | Order and order updates |
+| `factsheet` | Robot capability and limit declaration |
+| `connection` | Robot connection state notifications |
+| `visualization` | High-frequency position and path updates |
+| `instantActions` | Instant action commands and status |
+| `zoneSet` | Zone set transfers |
+| `responses` | Fleet control responses for robot requests |
+
+### Message Protocol
+
+#### Client → Server: Subscribe
+
+Clients send a `subscribe` message to update filter conditions. Uses **replacement semantics**: each message completely replaces the current filter set.
+
+```json
+{
+  "type": "subscribe",
+  "filters": {
+    "robotIds": ["Syrius.SOR-Carrier-001"],
+    "siteIds": ["site-warehouse-a"],
+    "topics": ["state", "connection"]
+  }
+}
+```
+
+**Filter fields (all optional):**
+
+| Field | Type | Description |
+|---|---|---|
+| `robotIds` | string[] | Filter by robot identifier (`{manufacturer}.{serialNumber}` format) |
+| `siteIds` | string[] | Filter by site identifier |
+| `topics` | string[] | Filter by MQTT topic name |
+
+- Omit a field or set to empty array to disable filtering on that dimension
+- Send `{ "type": "subscribe", "filters": {} }` to receive all messages
+
+#### Server → Client: Message
+
+The server forwards MQTT messages wrapped in a standard envelope:
+
+```json
+{
+  "type": "message",
+  "topic": "vda5050/v3/Syrius/SOR-Carrier-001/state",
+  "payload": { ... VDA5050 message payload ... }
+}
+```
+
+- `topic`: Full MQTT topic path, for example `vda5050/v3/Syrius/SOR-Carrier-001/state`
+- `payload`: Original VDA5050 message payload without transformation. Follows the VDA5050 JSON schema specification.
+
+### Design Principles
+
+1. **No data transformation**: MQTT message payloads are forwarded exactly as received. The WebSocket interface is a transparent tunnel.
+2. **Dynamic filtering**: Filter conditions can be updated at any time without reconnecting. This allows UIs to adapt as the operator navigates between views.
+3. **No server-side acknowledgement**: Subscribe messages are processed silently. The server does not confirm subscription state.
+4. **One-way streaming**: The WebSocket is primarily a server-to-client broadcast channel. Client messages are limited to `subscribe` commands only.
+5. **Multiple clients**: Each WebSocket connection maintains independent filter state. Multiple clients can subscribe to different data sets simultaneously.
+
+### Non-Goals
+
+- The WebSocket endpoint does not accept MQTT commands (orders, instant actions, etc.). Command submission remains via HTTP API.
+- The WebSocket endpoint does not provide historical data or replay. It only streams messages received after the connection is established.
+- Guaranteed message delivery is not required. Messages may be dropped under heavy load.
 
 ## Schema Compatibility Principles
 
