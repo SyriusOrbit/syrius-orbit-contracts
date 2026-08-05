@@ -1,14 +1,131 @@
 asyncapi: 3.0.0
 info:
-  title: MRIS MQTT Interface
+  title: MRIS WebSocket Interface
   version: 1.0.0
-  description: MRIS (Mobile Robot Interoperability Standard) interface for SyriusOrbit
+  description: |
+    AsyncAPI definition of the MRIS (Mobile Robot Interoperability Standard)
+    WebSocket interface for SyriusOrbit.
+
+    This specification models robot-to-enterprise system message exchange over
+    WebSocket (RFC 6455) with JSON payloads as defined by the MassRobotics
+    AMR Interoperability Standard.
+
+    MRIS is complementary to VDA5050:
+    - VDA5050 handles robot–fleet control communication (task dispatch, state feedback).
+    - MRIS focuses on robot status exchange with external enterprise systems (MES, WMS, etc.).
+
+    Two deployment targets are supported:
+
+    1. **Edge**: `ws://` (no TLS, OS-level access control) — for local Daemon connections.
+    2. **Cloud**: `wss://` (TLS 1.3 + mTLS + OAuth2 JWT) — for cloud service connections.
+
+    Robot workflow:
+    1. Robot establishes a WebSocket connection using its UUID as the path segment.
+    2. Robot sends an **identityReport** on connection and whenever capability info changes.
+    3. Robot sends **statusReport** messages periodically (typically 1–5 Hz).
+    4. External systems (MES, WMS, digital twin) subscribe by connecting to the same endpoint.
+defaultContentType: application/json
+servers:
+  edge:
+    host: '{edgeHost}:{edgePort}'
+    protocol: ws
+    protocolVersion: RFC 6455
+    description: |
+      Edge WebSocket endpoint for local Daemon connections.
+      No TLS — security is enforced via OS-level access control.
+    variables:
+      edgeHost:
+        default: localhost
+      edgePort:
+        default: '8084'
+  cloud:
+    host: '{cloudHost}:{cloudPort}'
+    protocol: wss
+    protocolVersion: RFC 6455
+    description: |
+      Cloud WebSocket endpoint for enterprise system connections.
+      Requires TLS 1.3 with mTLS client certificate and OAuth2 JWT authorization.
+    variables:
+      cloudHost:
+        default: mris.cloud.syriusorbit.com
+      cloudPort:
+        default: '8443'
 channels:
-  telemetry:
-    address: 'mris/robot/{robotId}/telemetry'
+  mris:
+    address: '/mris/{robotUuid}'
+    description: |
+      WebSocket channel for MRIS message exchange.
+      Each AMR connects using its unique robot UUID (RFC 4122) as the path segment.
+      A single connection multiplexes both identityReport and statusReport messages.
+    parameters:
+      robotUuid:
+        $ref: '#/components/parameters/robotUuid'
     messages:
-      telemetryMessage:
-        name: Telemetry
-        title: MRIS Telemetry Message
-        summary: Robot telemetry data
-        contentType: application/json
+      identityReportMessage:
+        $ref: '#/components/messages/IdentityReportMessage'
+      statusReportMessage:
+        $ref: '#/components/messages/StatusReportMessage'
+operations:
+  receiveIdentityReport:
+    action: receive
+    channel:
+      $ref: '#/channels/mris'
+    summary: External systems receive identity reports from connected AMRs.
+    description: |
+      An AMR sends an identityReport upon establishing a WebSocket connection,
+      and whenever its capability information changes (e.g., firmware update,
+      battery replacement, or configuration change).
+    messages:
+      - $ref: '#/channels/mris/messages/identityReportMessage'
+
+  receiveStatusReport:
+    action: receive
+    channel:
+      $ref: '#/channels/mris'
+    summary: External systems receive periodic status reports from connected AMRs.
+    description: |
+      An AMR sends statusReport messages periodically (typically 1–5 Hz)
+      to publish its current operational state, location, velocity, battery level,
+      and planned path.
+    messages:
+      - $ref: '#/channels/mris/messages/statusReportMessage'
+components:
+  parameters:
+    robotUuid:
+      description: >
+        RFC 4122 UUID of the AMR. This is the same identifier used in the
+        identityReport and statusReport message payloads. AMR must use the
+        same UUID consistently across all messages.
+      location: $message.path#/robotUuid
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+  messages:
+    IdentityReportMessage:
+      name: identityReport
+      title: MRIS Identity Report
+      summary: |
+        Robot identity and capability information published on connection
+        or when robot info changes.
+      description: |
+        The identityReport is sent by an AMR to declare its identity,
+        manufacturer, model, serial number, physical envelope,
+        and operational capabilities. This message is sent once on
+        connection and whenever the robot's information changes.
+      contentType: application/json
+      payload:
+        $ref: ../standards/AMR_Interop_Standard/json_schemas/identityReport.schema.json
+
+    StatusReportMessage:
+      name: statusReport
+      title: MRIS Status Report
+      summary: |
+        Real-time robot state, location, and operational status
+        published periodically during operation.
+      description: |
+        The statusReport is sent by an AMR at regular intervals
+        (typically 1–5 Hz) to communicate its current operational state,
+        position, velocity, battery level, remaining runtime,
+        planned destinations, and short-term path.
+      contentType: application/json
+      payload:
+        $ref: ../standards/AMR_Interop_Standard/json_schemas/statusReport.schema.json
