@@ -3,22 +3,88 @@
   <head>
     <meta charset="utf-8" />
     <title>SyriusOrbit Fleet Control API</title>
-    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.4.2/styles/default.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@3.1.3/styles/default.min.css" />
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@asyncapi/react-component@1.4.2/browser/standalone/index.js"></script>
-    <style>html,body,#root{height:100%;margin:0}</style>
+    <script src="https://unpkg.com/@asyncapi/react-component@3.1.3/browser/standalone/index.js"></script>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      }
+      .tab-container {
+        display: flex;
+        border-bottom: 1px solid #e1e5e9;
+        background: #f6f8fa;
+        padding: 0 16px;
+      }
+      .tab-button {
+        padding: 12px 24px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #57606a;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+      }
+      .tab-button:hover {
+        color: #24292f;
+        background: #f0f3f6;
+      }
+      .tab-button.active {
+        color: #0969da;
+        border-bottom-color: #0969da;
+        background: #fff;
+      }
+      .content-container {
+        height: calc(100% - 49px);
+        overflow: auto;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script>
-      (async () => {
-        try {
-          const schema = {
-            url: new URL('./vda5050.yaml', window.location.href).href,
-            options: { method: 'GET', mode: 'cors' },
-          };
+      // Tab definitions
+      const tabs = [
+        { id: 'vda5050', label: 'VDA5050', file: './vda5050.yaml' },
+        { id: 'mris', label: 'MRIS', file: './mris.yaml' },
+      ];
 
+      // Simple tab-based rendering without full React app
+      let activeTab = 'vda5050';
+
+      function renderTabs() {
+        const tabContainer = document.createElement('div');
+        tabContainer.className = 'tab-container';
+
+        tabs.forEach(tab => {
+          const button = document.createElement('button');
+          button.className = 'tab-button' + (activeTab === tab.id ? ' active' : '');
+          button.textContent = tab.label;
+          button.onclick = () => {
+            activeTab = tab.id;
+            render();
+          };
+          tabContainer.appendChild(button);
+        });
+
+        return tabContainer;
+      }
+
+      function renderAsyncApi(tab) {
+        const container = document.createElement('div');
+        container.className = 'content-container';
+
+        const schema = {
+          url: new URL(tab.file, window.location.href).href,
+          options: { method: 'GET', mode: 'cors' },
+        };
+
+        try {
           if (!window.AsyncApiStandalone || typeof window.AsyncApiStandalone.render !== 'function') {
             throw new Error('AsyncApiStandalone.render not found');
           }
@@ -32,13 +98,29 @@
                 },
               },
             },
-            document.getElementById('root'),
+            container,
           );
         } catch (e) {
-          document.body.innerHTML = '<pre style="color:red">' + e.message + '</pre>';
+          container.innerHTML = '<pre style="color:red;padding:16px">' + e.message + '</pre>';
           console.error(e);
         }
-      })();
+
+        return container;
+      }
+
+      function render() {
+        const root = document.getElementById('root');
+        root.innerHTML = '';
+
+        const tab = tabs.find(t => t.id === activeTab);
+        if (!tab) return;
+
+        root.appendChild(renderTabs());
+        root.appendChild(renderAsyncApi(tab));
+      }
+
+      // Initial render
+      render();
     </script>
   </body>
 </html>
