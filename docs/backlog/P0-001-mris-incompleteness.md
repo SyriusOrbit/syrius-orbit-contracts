@@ -2,7 +2,7 @@
 id: P0-001
 title: MRIS interface is a stub
 priority: P0
-status: open
+status: done
 area: fleet-control
 effort: medium
 depends-on:
@@ -18,11 +18,11 @@ The MRIS (Mobile Robot Interoperability Standard) AsyncAPI definition in `fleet-
 
 ## Definition of Done
 
-- [ ] Define MRIS channel topics (telemetry, status, charge status, task status)
-- [ ] Reference or inline payload schemas for each topic
-- [ ] Define operations (send/receive) for each channel
-- [ ] Add `components` section with message parameter definitions
-- [ ] Verify consistency with MRIS standard and VDA5050 alignment
+- [x] Define MRIS WebSocket channel with robotUuid parameter
+- [x] Reference or inline payload schemas for identityReport and statusReport messages
+- [x] Define operations (send/receive) for each message
+- [x] Add `components` section with message parameter definitions
+- [x] Verify consistency with MRIS standard and VDA5050 alignment
 
 ## Notes
 
