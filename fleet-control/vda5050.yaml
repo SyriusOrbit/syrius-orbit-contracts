@@ -1,7 +1,7 @@
 asyncapi: 3.0.0
 info:
-  title: SyriusOrbit Fleet Control API
-  version: 3.0.0
+  title: SyriusOrbit Fleet Control API - VDA5050
+  version: 1.0.0
   description: |
     AsyncAPI definition of the SyriusOrbit Fleet Control API over MQTT.
     This specification models robot communication, scheduling, and fleet messaging

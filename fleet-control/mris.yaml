@@ -1,8 +1,22 @@
 asyncapi: 3.0.0
 info:
-  title: MRIS WebSocket Interface
+  title: SyriusOrbit Fleet Control API - MRIS
   version: 1.0.0
-  description: MRIS WebSocket interface for robot-to-enterprise system communication.
+  description: |
+    AsyncAPI definition of the SyriusOrbit Fleet Control API over WebSocket.
+    This specification models robot-to-enterprise reporting using the MassRobotics
+    AMR Interoperability Standard (MRIS), and references canonical payload schemas
+    from standards/AMR_Interop_Standard.
+
+    MRIS is complementary to VDA5050:
+
+    1. **VDA5050** handles robot control, scheduling, and fleet messaging between
+       the fleet control system and mobile robots.
+    2. **MRIS** handles robot-to-enterprise reporting (identity and status) over
+       WebSocket, for integration with external enterprise systems (MES/WMS).
+
+    Mobile robots connect to this API as WebSocket clients and publish
+    identityReport and statusReport messages to the `/mris/{robotUuid}` channel.
 defaultContentType: application/json
 servers:
   edge:
