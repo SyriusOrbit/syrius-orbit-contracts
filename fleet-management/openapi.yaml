@@ -62,11 +62,20 @@ paths:
       tags:
         - Robots
       summary: List robots.
-      description: Retrieve the full list of robots currently known to the fleet management plane. Supports optional site filtering via ?siteId=xxx and orphan-only filtering via ?unbound=true. Always returns the complete list and does not support pagination.
+      description: |-
+        Retrieve the full list of robots currently known to the fleet
+        management plane. Supports filtering by site, orphan-only,
+        connection state, suspended state, and archived state.
+        Non-archived robots are returned by default; use ?archived=true
+        to include or retrieve only archived robots. Always returns
+        the complete list and does not support pagination.
       operationId: listRobots
       parameters:
         - $ref: '#/components/parameters/siteIdFilter'
         - $ref: '#/components/parameters/unboundFilter'
+        - $ref: '#/components/parameters/connectionStateFilter'
+        - $ref: '#/components/parameters/suspendedFilter'
+        - $ref: '#/components/parameters/archivedFilter'
       responses:
         '200':
           description: Robot list returned.
@@ -223,8 +232,18 @@ paths:
     patch:
       tags:
         - Robots
-      summary: Update a robot's mutable fields including siteId.
-      description: "Update a robot's mutable fields. The siteId field can be changed to bind an orphan (null→siteId), migrate between sites (siteId→siteId), or voluntarily unbind (siteId→null). Robot must be idle (no executing order or instant action) to change siteId."
+      summary: Update a robot's mutable fields including siteId, suspended, and archived.
+      description: |-
+        Update a robot's mutable fields. The siteId field can be changed
+        to bind an orphan (null→siteId), migrate between sites
+        (siteId→siteId), or voluntarily unbind (siteId→null). Robot must
+        be idle (no executing order or instant action) to change siteId.
+
+        Set `suspended: true` to temporarily exclude the robot from new
+        order assignment while continuing to receive MQTT state messages.
+
+        Set `archived: true` to hide the robot from default listings.
+        Archive is irreversible via API — unarchive is not supported.
       operationId: updateRobot
       parameters:
         - $ref: '#/components/parameters/robotId'
@@ -360,7 +379,11 @@ paths:
       tags:
         - InstantActions
       summary: List instant actions for a robot.
-      description: Retrieve a paginated, filterable history of instant actions triggered for a robot, as exposed through the robot state view.
+      description: |-
+        Retrieve a paginated, filterable history of instant actions
+        triggered for a robot, as exposed through the robot state view.
+        Non-archived actions are returned by default; use
+        ?archived=true to include or retrieve only archived actions.
       operationId: listRobotInstantActions
       parameters:
         - $ref: '#/components/parameters/robotId'
@@ -370,6 +393,7 @@ paths:
         - $ref: '#/components/parameters/actionStatusFilter'
         - $ref: '#/components/parameters/lastUpdatedAtFrom'
         - $ref: '#/components/parameters/lastUpdatedAtTo'
+        - $ref: '#/components/parameters/archivedFilter'
       responses:
         '200':
           description: Instant action list returned.
@@ -474,6 +498,58 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - InstantActions
+      summary: Update an instant action's archived state.
+      description: |-
+        Update the archived state of an instant action. Only instant
+        actions in terminal states (FINISHED, FAILED) can be archived.
+        Setting `archived: true` hides the action from default listings
+        while keeping it queryable. Archive is irreversible via API.
+      operationId: archiveRobotInstantAction
+      parameters:
+        - $ref: '#/components/parameters/robotId'
+        - $ref: '#/components/parameters/instantActionId'
+      requestBody:
+        description: Payload for updating instant action archive state.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - archived
+              properties:
+                archived:
+                  type: boolean
+                  description: Set to true to archive the instant action.
+                  example: true
+      responses:
+        '200':
+          description: Instant action archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantAction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Instant action is not in a terminal state and cannot be archived.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: 'https://syriusorbit.example/errors/conflict'
+                title: Conflict
+                status: 409
+                detail: Only instant actions in terminal states (FINISHED, FAILED) can be archived.
+                instance: 'https://api.syriusorbit.example/robots/Syrius.SOR-Carrier-001/instant-actions/act-2026-0001'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /sites/{siteId}/robots:
     get:
@@ -572,7 +648,11 @@ paths:
       tags:
         - Orders
       summary: List orders.
-      description: Retrieve a paginated, filterable list of orders tracked by the fleet management plane. Supports optional site filtering via ?siteId=xxx.
+      description: |-
+        Retrieve a paginated, filterable list of orders tracked by the
+        fleet management plane. Supports optional site filtering via
+        ?siteId=xxx. Non-archived orders are returned by default; use
+        ?archived=true to include or retrieve only archived orders.
       operationId: listOrders
       parameters:
         - $ref: '#/components/parameters/page'
@@ -582,6 +662,7 @@ paths:
         - $ref: '#/components/parameters/createdAtFrom'
         - $ref: '#/components/parameters/createdAtTo'
         - $ref: '#/components/parameters/siteIdFilter'
+        - $ref: '#/components/parameters/archivedFilter'
       responses:
         '200':
           description: Order list returned.
@@ -635,6 +716,57 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Orders
+      summary: Update an order's archived state.
+      description: |-
+        Update the archived state of an order. Only orders in terminal
+        states (SUCCEEDED, FAILED, CANCELED) can be archived. Setting
+        `archived: true` hides the order from default listings while
+        keeping it queryable. Archive is irreversible via API.
+      operationId: archiveOrder
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      requestBody:
+        description: Payload for updating order archive state.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - archived
+              properties:
+                archived:
+                  type: boolean
+                  description: Set to true to archive the order.
+                  example: true
+      responses:
+        '200':
+          description: Order archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Order is not in a terminal state and cannot be archived.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: 'https://syriusorbit.example/errors/conflict'
+                title: Conflict
+                status: 409
+                detail: Only orders in terminal states (SUCCEEDED, FAILED, CANCELED) can be archived.
+                instance: 'https://api.syriusorbit.example/orders/order-2026-0001'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1173,6 +1305,27 @@ components:
       schema:
         type: string
         format: date-time
+    connectionStateFilter:
+      name: connectionState
+      in: query
+      required: false
+      description: Filter robots by connection state.
+      schema:
+        $ref: '#/components/schemas/ConnectionState'
+    suspendedFilter:
+      name: suspended
+      in: query
+      required: false
+      description: Filter robots by suspended state. When true, returns only suspended robots. When false, returns only non-suspended robots.
+      schema:
+        type: boolean
+    archivedFilter:
+      name: archived
+      in: query
+      required: false
+      description: Filter resources by archived state. When true, returns only archived resources. When false, returns only non-archived resources.
+      schema:
+        type: boolean
 
   responses:
     BadRequest:
@@ -1420,6 +1573,21 @@ components:
           format: date-time
           description: Time the data was last updated, sourced from the VDA 5050 state `timestamp`.
           examples: ['2026-07-29T09:30:00Z']
+        suspended:
+          type: boolean
+          description: |-
+            When true, the robot is excluded from new order assignment
+            but continues to receive MQTT state messages. Set via
+            PATCH. Filterable via `?suspended=true`.
+          example: false
+        archived:
+          type: boolean
+          description: |-
+            When true, the robot is hidden from default listings
+            but remains queryable. Archive is irreversible via API
+            — unarchive is not supported. Filterable via
+            `?archived=true`. Set via PATCH.
+          example: false
 
     RobotDetail:
       description: |-
@@ -1585,6 +1753,20 @@ components:
           type: string
           description: Serial number of the mobile robot.
           example: SOR-C-2026-003
+        suspended:
+          type: boolean
+          description: |-
+            When true, the robot is excluded from new order assignment
+            but continues to receive MQTT state messages. Defaults to
+            false on creation.
+          default: false
+        archived:
+          type: boolean
+          description: |-
+            When true, the robot is hidden from default listings
+            but remains queryable. Defaults to false on creation.
+            Can only be set to true via PATCH.
+          default: false
 
     RobotUpdateRequest:
       type: object
@@ -1598,6 +1780,20 @@ components:
           type: ["string", "null"]
           description: Site identifier. Set to null to make robot an orphan.
           example: site-001
+        suspended:
+          type: boolean
+          description: |-
+            When true, the robot is excluded from new order assignment
+            but continues to receive MQTT state messages. Set to false
+            to resume order acceptance.
+          example: false
+        archived:
+          type: boolean
+          description: |-
+            When true, the robot is hidden from default listings
+            but remains queryable. Archive is irreversible via API
+            — unarchive is not supported.
+          example: false
 
     MobileRobotPosition:
       type: object
@@ -2964,6 +3160,15 @@ components:
           type: string
           description: Site identifier. Immutable for the lifetime of the order.
           examples: [site-warehouse-a]
+        archived:
+          type: boolean
+          description: |-
+            When true, the order is hidden from default listings but
+            remains queryable. Only orders in terminal states
+            (SUCCEEDED, FAILED, CANCELED) can be archived. Archive
+            is irreversible via API — unarchive is not supported.
+            Filterable via `?archived=true`. Set via PATCH.
+          example: false
 
     OrderCreateRequest:
       type: object
@@ -3400,6 +3605,15 @@ components:
           format: date-time
           description: Time the instant action was last updated.
           example: '2026-07-29T09:35:00Z'
+        archived:
+          type: boolean
+          description: |-
+            When true, the instant action is hidden from default
+            listings but remains queryable. Only instant actions in
+            terminal states (FINISHED, FAILED) can be archived. Archive
+            is irreversible via API — unarchive is not supported.
+            Filterable via `?archived=true`. Set via PATCH.
+          example: false
 
     MapList:
       type: object

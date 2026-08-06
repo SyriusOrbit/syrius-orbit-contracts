@@ -2,7 +2,7 @@
 id: P1-002
 title: Missing DELETE lifecycle operations
 priority: P1
-status: open
+status: in-progress
 area: fleet-management
 effort: low
 depends-on:
