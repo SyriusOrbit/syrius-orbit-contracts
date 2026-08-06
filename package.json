@@ -4,12 +4,12 @@
   "description": "`syrius-orbit-contracts` is the contract repository for SyriusOrbit, a spatial information and scheduling service platform for indoor Autonomous Mobile Robots (AMRs) built on an edge-cloud collaborative architecture.",
   "main": "index.js",
   "scripts": {
-    "lint:openapi": "redocly lint \"spatial/*.yaml\" \"fleet-management/*.yaml\"",
-    "lint:openapi:vacuum": "vacuum lint spatial/syriusorbit.yaml fleet-management/openapi.yaml",
+    "lint:openapi": "redocly lint --max-problems 500 \"spatial/*.yaml\" \"fleet-management/*.yaml\"",
+    "lint:openapi:vacuum": "vacuum lint -d -a --no-clip spatial/syriusorbit.yaml fleet-management/openapi.yaml",
     "lint:all": "npm run lint:openapi || exit 0 && npm run lint:openapi:vacuum || exit 0 && npm run validate:asyncapi",
     "bundle:spatial": "redocly bundle spatial/syriusorbit.yaml -o .tmp/syriusorbit.bundled.yaml",
     "validate:spatial": "swagger-cli validate spatial/syriusorbit.yaml",
-    "validate:asyncapi": "node scripts/prepare-asyncapi.cjs && vacuum lint .tmp/asyncapi/fleet-control/vda5050.yaml fleet-control/mris.yaml"
+    "validate:asyncapi": "node scripts/prepare-asyncapi.cjs && vacuum lint -d -a --no-clip .tmp/asyncapi/fleet-control/vda5050.yaml fleet-control/mris.yaml"
   },
   "repository": {
     "type": "git",
