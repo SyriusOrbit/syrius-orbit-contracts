@@ -8,6 +8,9 @@ info:
     name: 虞坤霖 (Kunlin Yu)
     email: yukunlin@syriusrobotics.com
     url: 'https://www.flexgalaxy.ai/'
+servers:
+  - url: /
+security: []
 tags:
   - name: DataSet
   - name: Capabilities
@@ -408,6 +411,7 @@ paths:
         calculationCompleted:
           '{$request.body#/subscriber}':
             post:
+              summary: Route calculation completed callback.
               requestBody:
                 description: the route
                 content:

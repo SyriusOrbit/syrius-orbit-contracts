@@ -17,7 +17,19 @@ info:
 
     Mobile robots connect to this API as WebSocket clients and publish
     identityReport and statusReport messages to the `/mris/{robotUuid}` channel.
+  contact:
+    name: SyriusOrbit Maintainers
+    url: https://github.com/SyriusOrbit/syrius-orbit-contracts
+    email: yukunlin@mail.ustc.edu.cn
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 defaultContentType: application/json
+tags:
+  - name: fleet-control
+    description: SyriusOrbit Fleet Control API.
+  - name: mris
+    description: MRIS robot-to-enterprise reporting messages.
 servers:
   edge:
     host: localhost
@@ -36,59 +48,67 @@ channels:
         description: RFC 4122 UUID of the AMR.
     messages:
       identityReportMessage:
-        name: identityReport
-        title: MRIS Identity Report
-        summary: Robot identity and capability information.
-        contentType: application/json
-        payload:
-          $ref: ./schemas/mris/identityReport.schema.json
-        examples:
-          - name: Basic Identity Report
-            summary: A basic identity report example from MassRobotics standard
-            payload:
-              uuid: '6948DF80-14BD-4E04-8842-7668D9C001F5'
-              timestamp: '2012-04-21T18:25:43-05:00'
-              manufacturerName: 'Mass Robotics AMR'
-              robotModel: 'AMR-01'
-              robotSerialNumber: '0000001'
-              baseRobotEnvelope:
-                x: 0.5
-                y: 1
+        $ref: '#/components/messages/identityReportMessage'
       statusReportMessage:
-        name: statusReport
-        title: MRIS Status Report
-        summary: Robot real-time status and location.
-        contentType: application/json
-        payload:
-          $ref: ./schemas/mris/statusReport.schema.json
-        examples:
-          - name: Navigating Status Report
-            summary: A status report example with navigation state from MassRobotics standard
-            payload:
-              uuid: '6948DF80-14BD-4E04-8842-7668D9C001F5'
-              timestamp: '2012-04-21T18:25:43-05:00'
-              operationalState: 'navigating'
-              location:
-                x: 0.5
-                y: 1
-                angle:
-                  w: 0.924
-                  x: 0.000
-                  y: 0.000
-                  z: 0.383
-                planarDatum: '4B8302DA-21AD-401F-AF45-1DFD956B80B5'
+        $ref: '#/components/messages/statusReportMessage'
 operations:
   receiveIdentityReport:
     action: receive
     channel:
       $ref: '#/channels/mris'
     summary: Receive identity reports from connected AMRs.
+    description: Receive MRIS identity and capability reports from connected AMRs.
     messages:
-      - $ref: '#/channels/mris/messages/identityReportMessage'
+      - $ref: '#/components/messages/identityReportMessage'
   receiveStatusReport:
     action: receive
     channel:
       $ref: '#/channels/mris'
     summary: Receive status reports from connected AMRs.
+    description: Receive MRIS real-time status and location reports from connected AMRs.
     messages:
-      - $ref: '#/channels/mris/messages/statusReportMessage'
+      - $ref: '#/components/messages/statusReportMessage'
+components:
+  messages:
+    identityReportMessage:
+      name: identityReport
+      title: MRIS Identity Report
+      summary: Robot identity and capability information.
+      contentType: application/json
+      payload:
+        $ref: ./schemas/mris/identityReport.schema.json
+      examples:
+        - name: Basic Identity Report
+          summary: A basic identity report example from MassRobotics standard
+          payload:
+            uuid: '6948DF80-14BD-4E04-8842-7668D9C001F5'
+            timestamp: '2012-04-21T18:25:43-05:00'
+            manufacturerName: 'Mass Robotics AMR'
+            robotModel: 'AMR-01'
+            robotSerialNumber: '0000001'
+            baseRobotEnvelope:
+              x: 0.5
+              y: 1
+    statusReportMessage:
+      name: statusReport
+      title: MRIS Status Report
+      summary: Robot real-time status and location.
+      contentType: application/json
+      payload:
+        $ref: ./schemas/mris/statusReport.schema.json
+      examples:
+        - name: Navigating Status Report
+          summary: A status report example with navigation state from MassRobotics standard
+          payload:
+            uuid: '6948DF80-14BD-4E04-8842-7668D9C001F5'
+            timestamp: '2012-04-21T18:25:43-05:00'
+            operationalState: 'navigating'
+            location:
+              x: 0.5
+              y: 1
+              angle:
+                w: 0.924
+                x: 0.000
+                y: 0.000
+                z: 0.383
+              planarDatum: '4B8302DA-21AD-401F-AF45-1DFD956B80B5'
