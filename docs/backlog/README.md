@@ -69,7 +69,6 @@ Additional context, references, or constraints.
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
-| [P1-002](./P1-002-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | open |
 | [P1-003](./P1-003-order-update-path.md) | Order update HTTP path missing | fleet-management | open |
 | [P1-004](./P1-004-map-detail-enrichment.md) | MapDetail identical to MapSummary | fleet-management | open |
 | [P1-005](./P1-005-navigation-graph-context.md) | NavigationGraph detail missing context | fleet-management | open |
@@ -90,3 +89,4 @@ Additional context, references, or constraints.
 |----|-------|------|-------------|
 | [P0-001](./done/P0-001-mris-incompleteness.md) | MRIS interface incomplete | fleet-control | 2026-08-06 |
 | [P1-001](./done/P1-001-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | 2026-08-06 |
+| [P1-002](./done/P1-002-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | 2026-08-06 |
