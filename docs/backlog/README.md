@@ -10,7 +10,7 @@ This directory tracks known gaps, issues, and improvement items across the Syriu
 2. **Pick an item** and set its `status` to `in-progress` in the item file's YAML frontmatter.
 3. **Implement the fix**, checking off each item in the "Definition of Done" checklist as you go.
 4. **Verify completion** by ensuring all checklist items are checked and all related tests pass.
-5. **Set status to `done`** and update `updated-at` timestamp when complete.
+5. **Set status to `done`**, update `updated-at` timestamp, and **move the item file into the `done/` subdirectory**. Completed items are retained for history and audit rather than deleted.
 
 ### Item File Format
 
@@ -62,7 +62,6 @@ Additional context, references, or constraints.
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
-| [P0-001](./P0-001-mris-incompleteness.md) | MRIS interface is a stub | fleet-control | open |
 | [P0-002](./P0-002-security-schemes.md) | Missing security scheme definitions | cross | open |
 | [P0-003](./P0-003-moving-features.md) | OGC Moving Features API missing | spatial | open |
 
