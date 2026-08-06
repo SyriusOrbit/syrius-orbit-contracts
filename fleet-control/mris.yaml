@@ -24,12 +24,12 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+  tags:
+    - name: fleet-control
+      description: SyriusOrbit Fleet Control API.
+    - name: mris
+      description: MRIS robot-to-enterprise reporting messages.
 defaultContentType: application/json
-tags:
-  - name: fleet-control
-    description: SyriusOrbit Fleet Control API.
-  - name: mris
-    description: MRIS robot-to-enterprise reporting messages.
 servers:
   edge:
     host: localhost
@@ -59,7 +59,7 @@ operations:
     summary: Receive identity reports from connected AMRs.
     description: Receive MRIS identity and capability reports from connected AMRs.
     messages:
-      - $ref: '#/components/messages/identityReportMessage'
+      - $ref: '#/channels/mris/messages/identityReportMessage'
   receiveStatusReport:
     action: receive
     channel:
@@ -67,7 +67,7 @@ operations:
     summary: Receive status reports from connected AMRs.
     description: Receive MRIS real-time status and location reports from connected AMRs.
     messages:
-      - $ref: '#/components/messages/statusReportMessage'
+      - $ref: '#/channels/mris/messages/statusReportMessage'
 components:
   messages:
     identityReportMessage:

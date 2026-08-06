@@ -22,12 +22,12 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+  tags:
+    - name: fleet-control
+      description: SyriusOrbit Fleet Control API.
+    - name: vda5050
+      description: VDA5050 robot communication messages.
 defaultContentType: application/json
-tags:
-  - name: fleet-control
-    description: SyriusOrbit Fleet Control API.
-  - name: vda5050
-    description: VDA5050 robot communication messages.
 servers:
   mqttBroker:
     host: '{brokerHost}:{brokerPort}'
@@ -186,7 +186,7 @@ operations:
     summary: Fleet control receives state messages from the mobile robot.
     description: Fleet control receives VDA5050 state reports from the mobile robot.
     messages:
-      - $ref: '#/components/messages/StateMessage'
+      - $ref: '#/channels/state/messages/stateMessage'
 
   receiveVisualization:
     action: receive
@@ -195,7 +195,7 @@ operations:
     summary: Fleet control receives optional visualization updates.
     description: Fleet control receives optional high-frequency visualization updates from the mobile robot.
     messages:
-      - $ref: '#/components/messages/VisualizationMessage'
+      - $ref: '#/channels/visualization/messages/visualizationMessage'
 
   receiveConnection:
     action: receive
@@ -204,7 +204,7 @@ operations:
     summary: Fleet control receives mobile robot connection state.
     description: Fleet control receives mobile robot connection state or broker last-will notifications.
     messages:
-      - $ref: '#/components/messages/ConnectionMessage'
+      - $ref: '#/channels/connection/messages/connectionMessage'
 
   receiveFactsheet:
     action: receive
@@ -213,7 +213,7 @@ operations:
     summary: Fleet control receives factsheet data from the mobile robot.
     description: Fleet control receives robot capability and limit declarations from the mobile robot.
     messages:
-      - $ref: '#/components/messages/FactsheetMessage'
+      - $ref: '#/channels/factsheet/messages/factsheetMessage'
 
   sendOrder:
     action: send
@@ -222,7 +222,7 @@ operations:
     summary: Fleet control sends orders to the mobile robot.
     description: Fleet control sends VDA5050 orders and order updates to the mobile robot.
     messages:
-      - $ref: '#/components/messages/OrderMessage'
+      - $ref: '#/channels/order/messages/orderMessage'
 
   sendInstantActions:
     action: send
@@ -231,7 +231,7 @@ operations:
     summary: Fleet control sends instant actions to the mobile robot.
     description: Fleet control sends immediate action commands to the mobile robot.
     messages:
-      - $ref: '#/components/messages/InstantActionsMessage'
+      - $ref: '#/channels/instantActions/messages/instantActionsMessage'
 
   sendZoneSet:
     action: send
@@ -240,7 +240,7 @@ operations:
     summary: Fleet control sends zone sets to the mobile robot.
     description: Fleet control sends zone set transfers to the mobile robot.
     messages:
-      - $ref: '#/components/messages/ZoneSetMessage'
+      - $ref: '#/channels/zoneSet/messages/zoneSetMessage'
 
   sendResponses:
     action: send
@@ -249,7 +249,7 @@ operations:
     summary: Fleet control responds to robot requests.
     description: Fleet control sends responses for robot request objects.
     messages:
-      - $ref: '#/components/messages/ResponsesMessage'
+      - $ref: '#/channels/responses/messages/responsesMessage'
 
 components:
   parameters:
