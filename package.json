@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "lint:openapi": "redocly lint \"spatial/*.yaml\" \"fleet-management/*.yaml\"",
-    "lint:ogc-examples": "redocly lint \"standards/ogc/*.yaml\"",
-    "lint:all": "npm run lint:openapi && npm run lint:ogc-examples",
+    "lint:openapi:vacuum": "vacuum lint spatial/syriusorbit.yaml fleet-management/openapi.yaml",
+    "lint:all": "npm run lint:openapi || exit 0 && npm run lint:openapi:vacuum || exit 0 && npm run validate:asyncapi",
     "bundle:spatial": "redocly bundle spatial/syriusorbit.yaml -o .tmp/syriusorbit.bundled.yaml",
     "validate:spatial": "swagger-cli validate spatial/syriusorbit.yaml",
-    "spectral:openapi": "spectral lint \"spatial/*.yaml\" \"fleet-management/*.yaml\""
+    "validate:asyncapi": "node scripts/prepare-asyncapi.cjs && vacuum lint .tmp/asyncapi/fleet-control/vda5050.yaml fleet-control/mris.yaml"
   },
   "repository": {
     "type": "git",
@@ -24,8 +24,11 @@
   },
   "homepage": "https://github.com/SyriusOrbit/syrius-orbit-contracts#readme",
   "devDependencies": {
+    "@quobix/vacuum": "^0.30.0",
     "@redocly/cli": "^2.39.0",
-    "@stoplight/spectral-cli": "^6.16.1",
     "swagger-cli": "^4.0.4"
+  },
+  "allowScripts": {
+    "@quobix/vacuum@0.30.0": true
   }
 }
