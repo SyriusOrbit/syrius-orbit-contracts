@@ -69,7 +69,6 @@ Additional context, references, or constraints.
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
-| [P1-001](./P1-001-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | open |
 | [P1-002](./P1-002-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | open |
 | [P1-003](./P1-003-order-update-path.md) | Order update HTTP path missing | fleet-management | open |
 | [P1-004](./P1-004-map-detail-enrichment.md) | MapDetail identical to MapSummary | fleet-management | open |
@@ -84,3 +83,10 @@ Additional context, references, or constraints.
 | [P2-002](./P2-002-fleet-mgmt-index-page.md) | Fleet Management missing documentation page | fleet-management | open |
 | [P2-003](./P2-003-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | open |
 | [P2-004](./P2-004-mqtt-qos.md) | MQTT QoS and subscription not specified | fleet-control | open |
+
+### Completed
+
+| ID | Title | Area | Completed At |
+|----|-------|------|-------------|
+| [P0-001](./done/P0-001-mris-incompleteness.md) | MRIS interface incomplete | fleet-control | 2026-08-06 |
+| [P1-001](./done/P1-001-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | 2026-08-06 |
