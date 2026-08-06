@@ -8,11 +8,15 @@ info:
     name: 虞坤霖 (Kunlin Yu)
     email: yukunlin@syriusrobotics.com
     url: 'https://www.flexgalaxy.ai/'
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
 servers:
   - url: /
 security: []
 tags:
   - name: DataSet
+    description: access to the vector datasets
   - name: Capabilities
     description: essential characteristics of this API
   - name: Features
@@ -43,11 +47,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Vectors'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}':
     get:
       summary: describeVector
+      operationId: describeVector
       tags:
         - DataSet
       parameters:
@@ -55,6 +62,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Vector'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/':
@@ -71,6 +80,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/LandingPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/conformance':
@@ -87,6 +98,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ConformanceDeclaration'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/collections':
@@ -100,6 +113,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Collections'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/collections/{collectionId}':
@@ -190,6 +205,8 @@ paths:
             application/schema+json:
               schema:
                 type: object
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/functions':
@@ -209,6 +226,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/functions'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   '/vectors/{vectorId}/collections/{collectionId}/items':
     get:
       tags:
@@ -324,6 +345,8 @@ paths:
             application/json:
                 schema:
                   $ref: '#/components/schemas/routes'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -422,6 +445,9 @@ paths:
                 '202':
                   description: |-
                     Route received successfully
+                '400':
+                  description: |-
+                    The callback payload was malformed.
   '/vectors/{vectorId}/routes/{routeId}':
     get:
       summary: fetch a route
@@ -750,7 +776,7 @@ components:
           type: number
         minItems: 1
         maxItems: 500
-      example: ids=1,2,3,10,11,12
+      example: [1, 2, 3, 10, 11, 12]
       style: form
       explode: false
     mapLayer:
@@ -769,13 +795,6 @@ components:
       name: routeId
       in: path
       description: The id of the route
-      required: true
-      schema:
-        type: string
-    jobId:
-      name: jobId
-      in: path
-      description: The id of a job
       required: true
       schema:
         type: string
@@ -1631,138 +1650,6 @@ components:
           minItems: 4
           items:
             type: number
-      example:
-        type: FeatureCollection
-        name: |-
-          Route from A to B
-        status: successful
-        links:
-          - href: 'https://example.com/routes/5e37f'
-            rel: self
-            type: application/geo+json
-            title: this document
-          - href: 'https://example.com/routes/5e37f/definition'
-            rel: describedBy
-            type: application/json
-            title: route definition for this route
-        features:
-          - type: Feature
-            id: 1
-            geometry:
-              type: LineString
-              coordinates:
-                - - 36.1234515
-                  - 32.6453783
-                - - 36.1230475
-                  - 32.6474995
-                - - 36.1226617
-                  - 32.6496609
-                - - 36.1222502
-                  - 32.6517703
-                - - 36.1218481
-                  - 32.6539184
-                - - 36.1214698
-                  - 32.655952
-                - - 36.121577
-                  - 32.6581182
-                - - 36.1217253
-                  - 32.6602735
-                - - 36.1218648
-                  - 32.6625212
-                - - 36.1221329
-                  - 32.6670227
-                - - 36.1222644
-                  - 32.6693694
-                - - 36.1223852
-                  - 32.6713623
-                - - 36.1225386
-                  - 32.6737007
-                - - 36.1226517
-                  - 32.6758111
-                - - 36.1227807
-                  - 32.6780519
-                - - 36.1229206
-                  - 32.6803173
-                - - 36.1230627
-                  - 32.6826661
-                - - 36.1231947
-                  - 32.6848655
-                - - 36.123323
-                  - 32.6870967
-                - - 36.1234537
-                  - 32.6893521
-                - - 36.1237022
-                  - 32.693658
-                - - 36.1238412
-                  - 32.6957939
-                - - 36.1239747
-                  - 32.697965
-                - - 36.1240873
-                  - 32.7000159
-                - - 36.1242391
-                  - 32.7022258
-                - - 36.1243499
-                  - 32.7043422
-                - - 36.1244689
-                  - 32.7064962
-                - - 36.124602
-                  - 32.7085578
-                - - 36.1247213
-                  - 32.7106286
-            properties:
-              type: route overview
-              length_m: 1224.7
-              duration_s: 75
-              maxHeight_m: 4.5
-              comment: This is a place to add a comment about the processing of the route.
-          - type: Feature
-            id: 2
-            geometry:
-              type: Point
-              coordinates:
-                - 36.1234515
-                - 32.6453783
-            properties:
-              type: start
-          - type: Feature
-            id: 3
-            geometry:
-              type: Point
-              coordinates:
-                - 36.1214698
-                - 32.655952
-            properties:
-              type: segment
-              length_m: 123.2
-              duration_s: 8
-              instruction: left
-              roadName: Main Street
-              maxHeight_m: 4.5
-              speedLimit: 35
-              speedLimitUnit: mph
-          - type: Feature
-            id: 4
-            geometry:
-              type: Point
-              coordinates:
-                - 36.1247213
-                - 32.7106286
-            properties:
-              type: segment
-              length_m: 1101.5
-              duration_s: 67
-              roadName: Chicago Avenue
-              speedLimit: 50
-              speedLimitUnit: mph
-          - type: Feature
-            id: 5
-            geometry:
-              type: Point
-              coordinates:
-                - 36.1247213
-                - 32.7106286
-            properties:
-              type: end
     route-start-or-end:
       type: object
       required:
@@ -1957,7 +1844,6 @@ components:
             $ref: '#/components/schemas/link'
       example:
         type: Feature
-        id: 3
         geometry:
           type: Point
           coordinates:
@@ -1967,9 +1853,9 @@ components:
           type: segment
           length_m: 123.2
           duration_s: 8
-          instruction: left
+          instructions: left
           roadName: Main Street
-          maxHeight: 4.5
+          maxHeight_m: 4.5
           speedLimit: 35
           speedLimitUnit: mph
         links:
@@ -2268,7 +2154,7 @@ components:
           description: the size of one pixel
           schema:
             type: integer
-            example: 0.02
+            example: 1
       content:
         image/png:
           schema:
@@ -2323,7 +2209,7 @@ components:
                 geometry:
                   type: Polygon
                   coordinates:
-                    - ...
+                    - [[7.01, 50.63], [7.02, 50.63], [7.02, 50.64], [7.01, 50.63]]
                 properties:
                   function: residential
                   floors: '2'
@@ -2333,7 +2219,7 @@ components:
                 geometry:
                   type: Polygon
                   coordinates:
-                    - ...
+                    - [[7.01, 50.63], [7.02, 50.63], [7.02, 50.64], [7.01, 50.63]]
                 properties:
                   function: public use
                   floors: '10'
@@ -2371,7 +2257,7 @@ components:
             geometry:
               type: Polygon
               coordinates:
-                - ...
+                - [[7.01, 50.63], [7.02, 50.63], [7.02, 50.64], [7.01, 50.63]]
             properties:
               function: residential
               floors: '2'
@@ -2409,9 +2295,6 @@ components:
     NotFound:
       description: |-
         The requested resource does not exist on the server. For example, a path parameter had an incorrect value.
-    NotAcceptable:
-      description: |-
-        Content negotiation failed. For example, the `Accept` header submitted in the request did not support any of the media types supported by the server for the requested resource.
     ServerError:
       description: |-
         A server error occurred.

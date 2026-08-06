@@ -111,11 +111,18 @@ paths:
       description: "Create a new robot resource. If siteId is provided in the request body, the robot is immediately affiliated with that site. If siteId is omitted or null, the robot is created as an orphan (unbound). Orphans are valid for pre-registration, migration preparation, and import workflows."
       operationId: createRobot
       requestBody:
+        description: Payload for creating a new robot.
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RobotCreateRequest'
+            example:
+              robotId: Syrius.SOR-Carrier-003
+              manufacturer: Syrius
+              serialNumber: SOR-C-2026-003
+              siteId: site-warehouse-a
+              displayName: Carrier 003
       responses:
         '201':
           description: Robot created.
@@ -129,6 +136,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RobotDetail'
+              example:
+                robotId: Syrius.SOR-Carrier-003
+                displayName: Carrier 003
+                siteId: site-warehouse-a
+                connectionState: ONLINE
+                operatingMode: AUTOMATIC
+                driving: false
+                paused: false
+                batteryLevel: 90.0
+                charging: false
+                lastUpdatedAt: '2026-07-29T09:45:00Z'
+                manufacturer: Syrius
+                serialNumber: SOR-Carrier-003
+                protocolVersion: 2.0.0
+                orderId: ''
+                orderUpdateId: 0
+                lastNodeId: ''
+                lastNodeSequenceId: 0
+                nodeStates: []
+                edgeStates: []
+                actionStates: []
+                instantActionStates: []
+                powerSupply:
+                  stateOfCharge: 90.0
+                  charging: false
+                safetyState:
+                  activeEmergencyStop: NONE
+                  fieldViolation: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -152,6 +187,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RobotDetail'
+              example:
+                robotId: Syrius.SOR-Carrier-001
+                displayName: Carrier 001
+                siteId: site-warehouse-a
+                connectionState: ONLINE
+                operatingMode: AUTOMATIC
+                driving: false
+                paused: false
+                batteryLevel: 87.5
+                charging: false
+                lastUpdatedAt: '2026-07-29T09:30:00Z'
+                manufacturer: Syrius
+                serialNumber: SOR-Carrier-001
+                protocolVersion: 2.0.0
+                orderId: order-2026-0001
+                orderUpdateId: 3
+                lastNodeId: Node-7
+                lastNodeSequenceId: 7
+                nodeStates: []
+                edgeStates: []
+                actionStates: []
+                instantActionStates: []
+                powerSupply:
+                  stateOfCharge: 87.5
+                  charging: false
+                safetyState:
+                  activeEmergencyStop: NONE
+                  fieldViolation: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -167,6 +230,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/robotId'
       requestBody:
+        description: Payload for updating a robot's mutable fields.
         required: true
         content:
           application/json:
@@ -179,6 +243,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RobotDetail'
+              example:
+                robotId: Syrius.SOR-Carrier-001
+                displayName: Carrier 001
+                siteId: site-warehouse-a
+                connectionState: ONLINE
+                operatingMode: AUTOMATIC
+                driving: false
+                paused: false
+                batteryLevel: 87.5
+                charging: false
+                lastUpdatedAt: '2026-07-29T09:30:00Z'
+                manufacturer: Syrius
+                serialNumber: SOR-Carrier-001
+                protocolVersion: 2.0.0
+                orderId: order-2026-0001
+                orderUpdateId: 3
+                lastNodeId: Node-7
+                lastNodeSequenceId: 7
+                nodeStates: []
+                edgeStates: []
+                actionStates: []
+                instantActionStates: []
+                powerSupply:
+                  stateOfCharge: 87.5
+                  charging: false
+                safetyState:
+                  activeEmergencyStop: NONE
+                  fieldViolation: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -211,6 +303,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FactsheetView'
+              example:
+                manufacturer: Syrius
+                serialNumber: SOR-Carrier-001
+                protocolVersion: 2.0.0
+                typeSpecification:
+                  seriesName: SOR Carrier
+                  mobileRobotKinematics: DIFFERENTIAL
+                  mobileRobotClass: CARRIER
+                  maximumLoadMass: 500
+                  localizationTypes:
+                    - NATURAL
+                  navigationTypes:
+                    - FREELY_NAVIGATING
+                physicalParameters:
+                  minimumSpeed: 0.1
+                  maximumSpeed: 1.5
+                  maximumAcceleration: 0.5
+                  maximumDeceleration: 0.5
+                  minimumHeight: 0.3
+                  maximumHeight: 1.5
+                  width: 0.8
+                  length: 1.2
+                protocolLimits:
+                  maximumStringLengths: {}
+                  maximumArrayLengths: {}
+                  timing:
+                    minimumOrderInterval: 0.1
+                    minimumStateInterval: 0.1
+                protocolFeatures:
+                  optionalParameters: []
+                  mobileRobotActions: []
+                mobileRobotGeometry: {}
+                loadSpecification: {}
+                lastUpdatedAt: '2026-07-29T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -275,6 +401,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/robotId'
       requestBody:
+        description: Payload describing the instant action to issue to the robot.
         required: true
         content:
           application/json:
@@ -302,6 +429,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InstantAction'
+              example:
+                actionId: act-2026-0001
+                actionType: cancelOrder
+                blockingType: NONE
+                actionStatus: WAITING
+                robotId: Syrius.SOR-Carrier-001
+                createdAt: '2026-07-29T09:30:00Z'
+                lastUpdatedAt: '2026-07-29T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -326,6 +461,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InstantAction'
+              example:
+                actionId: act-2026-0001
+                actionType: cancelOrder
+                blockingType: NONE
+                actionStatus: FINISHED
+                robotId: Syrius.SOR-Carrier-001
+                createdAt: '2026-07-29T09:30:00Z'
+                lastUpdatedAt: '2026-07-29T09:35:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -366,11 +509,17 @@ paths:
       parameters:
         - $ref: '#/components/parameters/siteId'
       requestBody:
+        description: Payload for creating a new robot affiliated with the site.
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RobotCreateRequest'
+            example:
+              robotId: Syrius.SOR-Carrier-004
+              manufacturer: Syrius
+              serialNumber: SOR-C-2026-004
+              displayName: Carrier 004
       responses:
         '201':
           description: Robot created.
@@ -384,6 +533,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RobotDetail'
+              example:
+                robotId: Syrius.SOR-Carrier-004
+                displayName: Carrier 004
+                siteId: site-warehouse-a
+                connectionState: ONLINE
+                operatingMode: AUTOMATIC
+                driving: false
+                paused: false
+                batteryLevel: 95.0
+                charging: true
+                lastUpdatedAt: '2026-07-29T10:00:00Z'
+                manufacturer: Syrius
+                serialNumber: SOR-Carrier-004
+                protocolVersion: 2.0.0
+                orderId: ''
+                orderUpdateId: 0
+                lastNodeId: ''
+                lastNodeSequenceId: 0
+                nodeStates: []
+                edgeStates: []
+                actionStates: []
+                instantActionStates: []
+                powerSupply:
+                  stateOfCharge: 95.0
+                  charging: true
+                safetyState:
+                  activeEmergencyStop: NONE
+                  fieldViolation: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -436,6 +613,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderDetail'
+              example:
+                orderId: order-2026-0001
+                orderUpdateId: 0
+                orderDescription: Transport order from dock A to zone B.
+                nodes:
+                  - nodeId: dock-a
+                    sequenceId: 0
+                    released: true
+                    actions: []
+                    position:
+                      x: 1.0
+                      y: 2.0
+                      theta: 0.0
+                edges: []
+                status: QUEUED
+                assignedRobotId: Syrius.SOR-Carrier-001
+                createdAt: '2026-07-29T09:00:00Z'
+                siteId: site-warehouse-a
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -480,11 +675,25 @@ paths:
       parameters:
         - $ref: '#/components/parameters/siteId'
       requestBody:
+        description: Payload for creating a new VDA 5050-aligned order.
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/OrderCreateRequest'
+            example:
+              orderDescription: Transport order from dock A to zone B.
+              nodes:
+                - nodeId: dock-a
+                  sequenceId: 0
+                  released: true
+                  actions: []
+                  position:
+                    x: 1.0
+                    y: 2.0
+                    theta: 0.0
+              edges: []
+              assignedRobotId: Syrius.SOR-Carrier-001
       responses:
         '201':
           description: Order created.
@@ -498,6 +707,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderDetail'
+              example:
+                orderId: order-2026-0002
+                orderUpdateId: 0
+                orderDescription: Transport order from dock A to zone B.
+                nodes:
+                  - nodeId: dock-a
+                    sequenceId: 0
+                    released: true
+                    actions: []
+                    position:
+                      x: 1.0
+                      y: 2.0
+                      theta: 0.0
+                edges: []
+                status: QUEUED
+                assignedRobotId: Syrius.SOR-Carrier-001
+                createdAt: '2026-07-29T09:05:00Z'
+                siteId: site-warehouse-a
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -545,6 +772,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MapDetail'
+              example:
+                mapId: map-001
+                mapVersion: '1.0'
+                mapDescriptor: Warehouse A map
+                mapStatus: ENABLED
+                siteId: site-warehouse-a
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -592,6 +825,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ZoneSetDetail'
+              example:
+                zoneSetId: zoneset-001
+                siteId: site-warehouse-a
+                zoneSetDescriptor: Warehouse A zone set
+                zones:
+                  - zoneId: zone-001
+                    zoneType: RELEASE
+                    vertices:
+                      - x: 0.0
+                        y: 0.0
+                      - x: 10.0
+                        y: 0.0
+                      - x: 10.0
+                        y: 10.0
+                      - x: 0.0
+                        y: 10.0
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -644,6 +893,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Zone'
+              example:
+                zoneId: zone-001
+                zoneType: RELEASE
+                vertices:
+                  - x: 0.0
+                    y: 0.0
+                  - x: 10.0
+                    y: 0.0
+                  - x: 10.0
+                    y: 10.0
+                  - x: 0.0
+                    y: 10.0
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -691,6 +952,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NavigationGraph'
+              example:
+                nodes:
+                  - nodeId: node-001
+                    nodePosition:
+                      x: 0.0
+                      y: 0.0
+                      theta: 0.0
+                      mapId: map-001
+                  - nodeId: node-002
+                    nodePosition:
+                      x: 10.0
+                      y: 0.0
+                      theta: 0.0
+                      mapId: map-001
+                edges:
+                  - edgeId: edge-001
+                    startNodeId: node-001
+                    endNodeId: node-002
+                    length: 10.0
+                    maximumSpeed: 1.5
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -898,23 +1179,47 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: 'https://syriusorbit.example/errors/bad-request'
+            title: Bad Request
+            status: 400
+            detail: The request is invalid.
+            instance: 'https://api.syriusorbit.example/robots'
     NotFound:
       description: The requested resource was not found.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: 'https://syriusorbit.example/errors/not-found'
+            title: Not Found
+            status: 404
+            detail: The requested resource was not found.
+            instance: 'https://api.syriusorbit.example/robots/Syrius.SOR-Carrier-999'
     InternalServerError:
       description: The server failed to process the request.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: 'https://syriusorbit.example/errors/internal-server-error'
+            title: Internal Server Error
+            status: 500
+            detail: The server failed to process the request.
+            instance: 'https://api.syriusorbit.example/robots'
 
   schemas:
     Problem:
       type: object
       description: RFC 7807 Problem Details object.
+      example:
+        type: 'about:blank'
+        title: Bad Request
+        status: 400
+        detail: The request is invalid.
+        instance: 'https://api.syriusorbit.example/robots'
       required:
         - title
         - status
@@ -923,24 +1228,33 @@ components:
           type: string
           format: uri
           description: URI identifying the problem type.
+          example: 'about:blank'
         title:
           type: string
           description: Short human-readable summary of the problem.
+          example: Bad Request
         status:
           type: integer
           format: int32
           description: HTTP status code generated by the origin server.
+          example: 400
         detail:
           type: string
           description: Human-readable explanation specific to this occurrence.
+          example: The request is invalid.
         instance:
           type: string
           format: uri
           description: URI identifying the specific occurrence of the problem.
+          example: 'https://api.syriusorbit.example/robots'
 
     Pagination:
       type: object
       description: Pagination metadata for collection responses.
+      example:
+        page: 1
+        pageSize: 20
+        total: 100
       required:
         - page
         - pageSize
@@ -983,6 +1297,7 @@ components:
     OrderStatus:
       type: string
       description: Management-side order status. Conversion timing between states is implementation-defined.
+      example: QUEUED
       enum:
         - QUEUED
         - RUNNING
@@ -993,6 +1308,7 @@ components:
     ActionStatus:
       type: string
       description: Action status, following the VDA 5050 action state schema.
+      example: RUNNING
       enum:
         - WAITING
         - INITIALIZING
@@ -1019,6 +1335,7 @@ components:
     ZoneType:
       type: string
       description: Zone category, following the VDA 5050 zone set schema.
+      example: RELEASE
       enum:
         - BLOCKED
         - LINE_GUIDED
@@ -1034,17 +1351,20 @@ components:
     MapStatus:
       type: string
       description: Status of a map version on the mobile robot, following the VDA 5050 map schema.
+      example: ENABLED
       enum:
         - ENABLED
         - DISABLED
 
     RobotList:
       type: object
+      description: A list of robots.
       required:
         - robots
       properties:
         robots:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/RobotSummary'
 
@@ -1250,15 +1570,19 @@ components:
         displayName:
           type: string
           description: Management-side display name for the robot.
+          example: Robot A
         siteId:
           type: ["string", "null"]
           description: Site identifier. Null or omit to create as orphan.
+          example: site-001
         manufacturer:
           type: string
           description: Manufacturer of the mobile robot.
+          example: Syrius
         serialNumber:
           type: string
           description: Serial number of the mobile robot.
+          example: SOR-C-2026-003
 
     RobotUpdateRequest:
       type: object
@@ -1267,9 +1591,11 @@ components:
         displayName:
           type: string
           description: Management-side display name for the robot.
+          example: Robot A
         siteId:
           type: ["string", "null"]
           description: Site identifier. Set to null to make robot an orphan.
+          example: site-001
 
     MobileRobotPosition:
       type: object
@@ -1467,6 +1793,7 @@ components:
           description: Action type, optional, only for informational or visualization purposes.
         actionDescriptor:
           type: string
+          example: Cancel order
         actionStatus:
           $ref: '#/components/schemas/ActionStatus'
         actionResult:
@@ -1803,9 +2130,11 @@ components:
         manufacturer:
           type: string
           description: Manufacturer of the mobile robot, preserved from the VDA 5050 factsheet.
+          example: Syrius
         serialNumber:
           type: string
           description: Serial number of the mobile robot, preserved from the VDA 5050 factsheet.
+          example: SOR-Carrier-001
         protocolVersion:
           type: string
           description: VDA 5050 protocol version, sourced from the VDA 5050 factsheet message header `version`.
@@ -1822,16 +2151,75 @@ components:
           $ref: '#/components/schemas/MobileRobotGeometry'
         loadSpecification:
           $ref: '#/components/schemas/LoadSpecification'
+          type: object
+          example:
+            loadPositions:
+              - cargo
+            loadSets:
+              - setName: standard-cargo
+                loadType: CARGO
+                loadPositions:
+                  - cargo
+                boundingBoxReference:
+                  x: 0.0
+                  y: 0.0
+                  z: 0.0
+                  theta: 0.0
+                loadDimensions:
+                  length: 1.2
+                  width: 0.8
+                  height: 0.5
+                maximumWeight: 500
+                minimumLoadhandlingHeight: 0.3
+                maximumLoadhandlingHeight: 1.5
+                minimumLoadhandlingDepth: 0.0
+                maximumLoadhandlingDepth: 1.0
+                minimumLoadhandlingTilt: 0.0
+                maximumLoadhandlingTilt: 0.0
+                maximumSpeed: 1.5
+                maximumAcceleration: 0.5
+                maximumDeceleration: 0.5
+                pickTime: 5.0
+                dropTime: 5.0
+                description: Standard cargo load specification
         mobileRobotConfiguration:
           $ref: '#/components/schemas/MobileRobotConfiguration'
+          type: object
+          example:
+            versions:
+              - key: software.version
+                value: 2.4.1
+            network:
+              dnsServers:
+                - 10.0.0.10
+              ntpServers:
+                - 10.0.0.20
+              localIpAddress: 192.168.1.50
+              netmask: 255.255.255.0
+              defaultGateway: 192.168.1.1
+            batteryCharging:
+              criticalLowChargingLevel: 10
+              minimumDesiredChargingLevel: 30
+              maximumDesiredChargingLevel: 90
+              minimumChargingTime: 1800
         lastUpdatedAt:
           type: string
           format: date-time
           description: Time the factsheet cache was last refreshed.
+          example: '2026-07-29T09:30:00Z'
 
     TypeSpecification:
       type: object
       description: Type specification of the mobile robot, following the VDA 5050 factsheet schema.
+      example:
+        seriesName: SOR Carrier
+        mobileRobotKinematics: DIFFERENTIAL
+        mobileRobotClass: CARRIER
+        maximumLoadMass: 500
+        localizationTypes:
+          - NATURAL
+        navigationTypes:
+          - FREELY_NAVIGATING
       required:
         - seriesName
         - mobileRobotKinematics
@@ -1873,6 +2261,15 @@ components:
     PhysicalParameters:
       type: object
       description: Physical properties of the mobile robot, following the VDA 5050 factsheet schema.
+      example:
+        minimumSpeed: 0.1
+        maximumSpeed: 1.5
+        maximumAcceleration: 0.5
+        maximumDeceleration: 0.5
+        minimumHeight: 0.3
+        maximumHeight: 1.5
+        width: 0.8
+        length: 1.2
       required:
         - minimumSpeed
         - maximumSpeed
@@ -1932,6 +2329,12 @@ components:
     ProtocolLimits:
       type: object
       description: Protocol limitations of the mobile robot, following the VDA 5050 factsheet schema.
+      example:
+        maximumStringLengths: {}
+        maximumArrayLengths: {}
+        timing:
+          minimumOrderInterval: 0.1
+          minimumStateInterval: 0.1
       required:
         - maximumStringLengths
         - maximumArrayLengths
@@ -2071,6 +2474,9 @@ components:
     ProtocolFeatures:
       type: object
       description: Supported features of the VDA 5050 protocol, following the VDA 5050 factsheet schema.
+      example:
+        optionalParameters: []
+        mobileRobotActions: []
       required:
         - optionalParameters
         - mobileRobotActions
@@ -2153,6 +2559,16 @@ components:
     MobileRobotGeometry:
       type: object
       description: Mobile robot geometry, following the VDA 5050 factsheet schema.
+      example:
+        wheelDefinitions:
+          - type: DRIVE
+            isActiveDriven: true
+            isActiveSteered: true
+            position:
+              x: 0.4
+              y: 0.0
+            diameter: 0.2
+            width: 0.1
       properties:
         wheelDefinitions:
           type: array
@@ -2412,12 +2828,14 @@ components:
 
     OrderList:
       type: object
+      description: A paginated list of orders.
       required:
         - orders
         - pagination
       properties:
         orders:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/OrderSummary'
         pagination:
@@ -2450,6 +2868,7 @@ components:
         orderDescription:
           type: string
           description: Additional human-readable information for visualization purposes only.
+          example: Transport order from dock A to zone B.
         status:
           $ref: '#/components/schemas/OrderStatus'
         assignedRobotId:
@@ -2510,15 +2929,22 @@ components:
         orderDescription:
           type: string
           description: Additional human-readable information for visualization purposes only.
+          example: Transport order from dock A to zone B.
         nodes:
           type: array
           description: Array of nodes to be traversed for fulfilling the order.
           minItems: 1
+          example:
+            - nodeId: dock-a
+              sequenceId: 0
+              released: true
+              actions: []
           items:
             $ref: '#/components/schemas/Node'
         edges:
           type: array
           description: Array of edges to be traversed for fulfilling the order. May be empty if the order contains a single node.
+          example: []
           items:
             $ref: '#/components/schemas/Edge'
         status:
@@ -2551,13 +2977,20 @@ components:
         orderDescription:
           type: string
           description: Additional human-readable information for visualization purposes only.
+          example: Transport order from dock A to zone B.
         nodes:
           type: array
           minItems: 1
+          example:
+            - nodeId: dock-a
+              sequenceId: 0
+              released: true
+              actions: []
           items:
             $ref: '#/components/schemas/Node'
         edges:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/Edge'
         assignedRobotId:
@@ -2737,6 +3170,7 @@ components:
           description: Name of the action. Identifies the function of the action.
         actionDescriptor:
           type: string
+          example: Cancel order
         blockingType:
           $ref: '#/components/schemas/BlockingType'
         actionParameters:
@@ -2767,7 +3201,8 @@ components:
               format: int64
             - type: string
             - type: array
-              items: {}
+              items:
+                type: string
             - type: object
 
     Trajectory:
@@ -2842,12 +3277,14 @@ components:
 
     InstantActionList:
       type: object
+      description: A paginated list of instant actions.
       required:
         - instantActions
         - pagination
       properties:
         instantActions:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/InstantAction'
         pagination:
@@ -2873,8 +3310,10 @@ components:
           examples: [cancelOrder]
         actionDescriptor:
           type: string
+          example: Cancel order
         blockingType:
           type: string
+          example: NONE
           description: |-
             Blocking type of the instant action. Following the VDA 5050
             instantActions schema, the blocking type of an instant action is
@@ -2884,11 +3323,15 @@ components:
             - NONE
         actionParameters:
           type: array
+          example:
+            - key: orderId
+              value: order-2026-0001
           items:
             $ref: '#/components/schemas/ActionParameter'
         retriable:
           type: boolean
           description: True if the action can enter the RETRIABLE state when it fails. Defaults to false.
+          example: false
 
     InstantAction:
       type: object
@@ -2905,12 +3348,16 @@ components:
         actionId:
           type: string
           description: Server-generated unique action identifier.
+          example: act-2026-0001
         actionType:
           type: string
+          example: cancelOrder
         actionDescriptor:
           type: string
+          example: Cancel order
         blockingType:
           type: string
+          example: NONE
           description: |-
             Blocking type of the instant action. Following the VDA 5050
             instantActions schema, the blocking type of an instant action is
@@ -2919,15 +3366,20 @@ components:
             - NONE
         actionParameters:
           type: array
+          example:
+            - key: orderId
+              value: order-2026-0001
           items:
             $ref: '#/components/schemas/ActionParameter'
         retriable:
           type: boolean
+          example: false
         actionStatus:
           $ref: '#/components/schemas/ActionStatus'
         actionResult:
           type: string
           description: Description of the result, errors are transmitted in the robot `errors` array.
+          example: Order canceled successfully.
         robotId:
           type: string
           description: Robot targeted by the instant action.
@@ -2935,22 +3387,27 @@ components:
         siteId:
           type: ["string", "null"]
           description: Site context at creation time.
+          example: site-warehouse-a
         createdAt:
           type: string
           format: date-time
           description: Instant action creation timestamp.
+          example: '2026-07-29T09:30:00Z'
         lastUpdatedAt:
           type: string
           format: date-time
           description: Time the instant action was last updated.
+          example: '2026-07-29T09:35:00Z'
 
     MapList:
       type: object
+      description: A list of maps.
       required:
         - maps
       properties:
         maps:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/MapSummary'
 
@@ -2990,17 +3447,21 @@ components:
         mapId:
           type: string
           description: VDA 5050 map identifier.
+          example: map-001
         mapVersion:
           type: string
           description: VDA 5050 map version.
+          example: '1.0'
         mapDescriptor:
           type: string
           description: VDA 5050 map descriptor, a user-defined, human-readable name.
+          example: Warehouse A map
         mapStatus:
           $ref: '#/components/schemas/MapStatus'
         siteId:
           type: string
           description: Site identifier.
+          example: site-warehouse-a
 
     NavigationGraph:
       type: object
@@ -3014,16 +3475,22 @@ components:
         nodes:
           type: array
           description: Graph nodes, aligned with VDA 5050 node terminology.
+          example: []
           items:
             $ref: '#/components/schemas/NavigationGraphNode'
         edges:
           type: array
           description: Graph edges, aligned with VDA 5050 edge terminology.
+          example:
+            - edgeId: edge-001
+              startNodeId: node-001
+              endNodeId: node-002
           items:
             $ref: '#/components/schemas/NavigationGraphEdge'
 
     NavigationGraphNode:
       type: object
+      description: A node within a navigation graph.
       required:
         - nodeId
         - nodePosition
@@ -3037,6 +3504,7 @@ components:
 
     NavigationGraphEdge:
       type: object
+      description: A directed edge within a navigation graph.
       required:
         - edgeId
         - startNodeId
@@ -3101,11 +3569,13 @@ components:
 
     NavigationGraphList:
       type: object
+      description: A list of navigation graphs.
       required:
         - navigationGraphs
       properties:
         navigationGraphs:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/NavigationGraphSummary'
 
@@ -3132,6 +3602,7 @@ components:
           description: Number of zones in the zone set.
 
     ZoneSetDetail:
+      description: Full detail of a zone set, including its zones.
       allOf:
         - $ref: '#/components/schemas/ZoneSetSummary'
         - type: object
@@ -3144,22 +3615,26 @@ components:
 
     ZoneSetList:
       type: object
+      description: A list of zone sets.
       required:
         - zoneSets
       properties:
         zoneSets:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/ZoneSetSummary'
 
     ZoneList:
       type: object
+      description: A paginated list of zones.
       required:
         - zones
         - pagination
       properties:
         zones:
           type: array
+          example: []
           items:
             $ref: '#/components/schemas/Zone'
         pagination:
@@ -3201,11 +3676,13 @@ components:
         zoneId:
           type: string
           description: Locally unique zone identifier within the zone set.
+          example: zone-001
         zoneType:
           $ref: '#/components/schemas/ZoneType'
         zoneDescriptor:
           type: string
           description: User-defined, human-readable name or descriptor.
+          example: Release zone at dock A
         zoneSetId:
           type: string
           description: |-
@@ -3222,11 +3699,21 @@ components:
           type: array
           minItems: 3
           description: Vertices defining the geometrical shape of the zone.
+          example:
+            - x: 0.0
+              y: 0.0
+            - x: 10.0
+              y: 0.0
+            - x: 10.0
+              y: 10.0
+            - x: 0.0
+              y: 10.0
           items:
             $ref: '#/components/schemas/Vertex'
         releaseLossBehavior:
           type: string
           description: Required for `RELEASE` zones. Behavior if the release expires or is revoked.
+          example: STOP
           enum:
             - STOP
             - CONTINUE
@@ -3235,19 +3722,32 @@ components:
           type: number
           format: double
           description: Required for `SPEED_LIMIT` zones. Maximum allowed speed in meters per second.
+          example: 1.5
         entryActions:
           type: array
           description: Required for `ACTION` zones. Actions executed when entering the zone.
+          example:
+            - actionId: engage-cargo-lock
+              actionType: ENGAGE_CARGO_LOCK
+              blockingType: HARD
           items:
             $ref: '#/components/schemas/Action'
         duringActions:
           type: array
           description: Required for `ACTION` zones. Actions executed while crossing the zone.
+          example:
+            - actionId: transfer-cargo
+              actionType: TRANSFER_CARGO
+              blockingType: SOFT
           items:
             $ref: '#/components/schemas/Action'
         exitActions:
           type: array
           description: Required for `ACTION` zones. Actions triggered when leaving the zone.
+          example:
+            - actionId: release-cargo-lock
+              actionType: RELEASE_CARGO_LOCK
+              blockingType: HARD
           items:
             $ref: '#/components/schemas/Action'
         priorityFactor:
@@ -3256,19 +3756,23 @@ components:
           minimum: 0
           maximum: 1
           description: Required for `PRIORITY` zones. Relative preference factor.
+          example: 0.8
         penaltyFactor:
           type: number
           format: double
           minimum: 0
           maximum: 1
           description: Required for `PENALTY` zones. Relative penalty factor.
+          example: 0.2
         direction:
           type: number
           format: double
           description: Required for `DIRECTED` and `BIDIRECTED` zones. Preferred direction of travel in radians.
+          example: 1.5708
         directedLimitation:
           type: string
           description: Required for `DIRECTED` zones. Strictness of the direction constraint.
+          example: RESTRICTED
           enum:
             - SOFT
             - RESTRICTED
@@ -3276,6 +3780,7 @@ components:
         bidirectedLimitation:
           type: string
           description: Required for `BIDIRECTED` zones. Strictness of the bidirectional constraint.
+          example: SOFT
           enum:
             - SOFT
             - RESTRICTED
@@ -3298,6 +3803,7 @@ components:
 
     FleetOverview:
       type: object
+      description: Aggregate overview of the fleet across sites.
       required:
         - robotCount
         - onlineRobotCount
