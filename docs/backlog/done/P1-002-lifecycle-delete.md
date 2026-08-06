@@ -104,7 +104,7 @@ codes, which is the established best practice.
   parameter.
 - `PATCH /robots/{robotId}`: updated description to document
   `suspended` and `archived` operations.
-- `PATCH /orders/{orderId}`: new endpoint for archiving orders
+- `POST /orders/{orderId}/archive`: new endpoint for archiving orders
   (409 if non-terminal).
 - `PATCH /robots/{robotId}/instant-actions/{instantActionId}`: new
   endpoint for archiving instant actions (409 if non-terminal).

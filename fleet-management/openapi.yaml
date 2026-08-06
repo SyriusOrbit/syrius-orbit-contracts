@@ -718,32 +718,18 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-    patch:
+    post:
       tags:
         - Orders
-      summary: Update an order's archived state.
+      summary: Archive an order.
       description: |-
-        Update the archived state of an order. Only orders in terminal
-        states (SUCCEEDED, FAILED, CANCELED) can be archived. Setting
-        `archived: true` hides the order from default listings while
-        keeping it queryable. Archive is irreversible via API.
+        Archive an order. Only orders in terminal states
+        (SUCCEEDED, FAILED, CANCELED) can be archived. Archiving hides
+        the order from default listings while keeping it queryable.
+        Archive is irreversible via API.
       operationId: archiveOrder
       parameters:
         - $ref: '#/components/parameters/orderId'
-      requestBody:
-        description: Payload for updating order archive state.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - archived
-              properties:
-                archived:
-                  type: boolean
-                  description: Set to true to archive the order.
-                  example: true
       responses:
         '200':
           description: Order archived.
@@ -3167,7 +3153,8 @@ components:
             remains queryable. Only orders in terminal states
             (SUCCEEDED, FAILED, CANCELED) can be archived. Archive
             is irreversible via API — unarchive is not supported.
-            Filterable via `?archived=true`. Set via PATCH.
+            Filterable via `?archived=true`. Set via
+            `POST /orders/{orderId}/archive`.
           example: false
 
     OrderCreateRequest:
