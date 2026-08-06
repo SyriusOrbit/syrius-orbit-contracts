@@ -1071,8 +1071,7 @@ components:
           description: Management-side display name.
           examples: [Carrier 001]
         siteId:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: Management-side logical site assignment. Null for orphan robots.
         connectionState:
           $ref: '#/components/schemas/ConnectionState'
@@ -1126,8 +1125,7 @@ components:
             - safetyState
           properties:
             siteId:
-              type: string
-              nullable: true
+              type: ["string", "null"]
               description: Management-side logical site assignment. Null for orphan robots.
             manufacturer:
               type: string
@@ -1253,8 +1251,7 @@ components:
           type: string
           description: Management-side display name for the robot.
         siteId:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: Site identifier. Null or omit to create as orphan.
         manufacturer:
           type: string
@@ -1271,8 +1268,7 @@ components:
           type: string
           description: Management-side display name for the robot.
         siteId:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: Site identifier. Set to null to make robot an orphan.
 
     MobileRobotPosition:
@@ -2937,8 +2933,7 @@ components:
           description: Robot targeted by the instant action.
           examples: [Syrius.SOR-Carrier-001]
         siteId:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: Site context at creation time.
         createdAt:
           type: string

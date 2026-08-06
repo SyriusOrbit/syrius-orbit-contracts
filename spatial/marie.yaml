@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Marie Service API
   version: 1.2.0
@@ -1023,9 +1023,8 @@ components:
                 minItems: 2
                 maxItems: 2
                 items:
-                  type: string
+                  type: ["string", "null"]
                   format: date-time
-                  nullable: true
                 example:
                   - '2011-11-11T12:22:11Z'
                   - null
@@ -1078,8 +1077,7 @@ components:
         geometry:
           $ref: "#/components/schemas/geometryGeoJSON"
         properties:
-          type: object
-          nullable: true
+          type: ["object", "null"]
         id:
           oneOf:
             - type: string
@@ -1773,8 +1771,7 @@ components:
           enum:
             - Feature
         properties:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
           properties:
@@ -1794,8 +1791,7 @@ components:
               type: string
               format: date-time
         geometry:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
             - coordinates
@@ -1821,8 +1817,7 @@ components:
           enum:
             - Feature
         properties:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
             - length_m
@@ -1858,8 +1853,7 @@ components:
               type: string
               format: date-time
         geometry:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
             - coordinates
@@ -1889,8 +1883,7 @@ components:
           enum:
             - Feature
         properties:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
             - length_m
@@ -1940,8 +1933,7 @@ components:
                 - left
                 - right
         geometry:
-          type: object
-          nullable: true
+          type: ["object", "null"]
           required:
             - type
             - coordinates
