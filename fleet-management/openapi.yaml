@@ -118,11 +118,10 @@ paths:
             schema:
               $ref: '#/components/schemas/RobotCreateRequest'
             example:
-              robotId: Syrius.SOR-Carrier-003
+              displayName: Carrier 003
+              siteId: site-warehouse-a
               manufacturer: Syrius
               serialNumber: SOR-C-2026-003
-              siteId: site-warehouse-a
-              displayName: Carrier 003
       responses:
         '201':
           description: Robot created.
@@ -516,10 +515,10 @@ paths:
             schema:
               $ref: '#/components/schemas/RobotCreateRequest'
             example:
-              robotId: Syrius.SOR-Carrier-004
+              displayName: Carrier 004
+              siteId: site-warehouse-a
               manufacturer: Syrius
               serialNumber: SOR-C-2026-004
-              displayName: Carrier 004
       responses:
         '201':
           description: Robot created.
@@ -622,7 +621,8 @@ paths:
                     sequenceId: 0
                     released: true
                     actions: []
-                    position:
+                    nodePosition:
+                      mapId: map-warehouse-a
                       x: 1.0
                       y: 2.0
                       theta: 0.0
@@ -688,7 +688,8 @@ paths:
                   sequenceId: 0
                   released: true
                   actions: []
-                  position:
+                  nodePosition:
+                    mapId: map-warehouse-a
                     x: 1.0
                     y: 2.0
                     theta: 0.0
@@ -716,7 +717,8 @@ paths:
                     sequenceId: 0
                     released: true
                     actions: []
-                    position:
+                    nodePosition:
+                      mapId: map-warehouse-a
                       x: 1.0
                       y: 2.0
                       theta: 0.0
