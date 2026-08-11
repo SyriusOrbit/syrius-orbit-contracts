@@ -75,7 +75,6 @@ Additional context, references, or constraints.
 | ID | Title | Area | Status |
 |----|-------|------|--------|
 | [P2-001](./P2-001-spatial-fleet-mapping.md) | Missing Spatial-to-Fleet translation mapping | cross | open |
-| [P2-002](./P2-002-fleet-mgmt-index-page.md) | Fleet Management missing documentation page | fleet-management | open |
 | [P2-003](./P2-003-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | open |
 | [P2-004](./P2-004-mqtt-qos.md) | MQTT QoS and subscription not specified | fleet-control | open |
 
