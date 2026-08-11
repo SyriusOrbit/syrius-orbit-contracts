@@ -393,6 +393,8 @@ This is a rough path design based on the current requirements. It is intentional
 - `GET /orders?siteId={siteId}` - list orders filtered by site (equivalent to `/sites/{siteId}/orders`)
 - `GET /sites/{siteId}/orders` - list orders for a specific site (equivalent to `GET /orders?siteId=xxx`)
 - `GET /orders/{orderId}` - get order detail
+- `PATCH /orders/{orderId}` - update an order with incremental VDA 5050 content (additive nodes/edges/actions, server auto-increments `orderUpdateId`)
+- `POST /orders/{orderId}/archive` - archive a terminal order (irreversible)
 - `POST /sites/{siteId}/orders` - create an order for a specific site (site ID enforced in path, immutable after creation)
 
 ### Map-related paths (translation views, read-only)

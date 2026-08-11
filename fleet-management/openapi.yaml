@@ -718,6 +718,90 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Orders
+      summary: Update an order with incremental VDA 5050 content.
+      description: |-
+        Append new nodes, edges, and actions to an existing order
+        following VDA 5050 additive update semantics. The server
+        auto-increments `orderUpdateId` on each successful update.
+        Only non-terminal, non-archived orders can be updated.
+      operationId: updateOrder
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      requestBody:
+        description: Incremental order update payload.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUpdateRequest'
+            example:
+              orderDescription: Updated description for transport order.
+              nodes:
+                - nodeId: zone-b
+                  sequenceId: 1
+                  released: true
+                  actions: []
+                  nodePosition:
+                    mapId: map-warehouse-a
+                    x: 10.0
+                    y: 20.0
+                    theta: 0.0
+      responses:
+        '200':
+          description: Order updated. The response includes the full order with new `orderUpdateId`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+              example:
+                orderId: order-2026-0001
+                orderUpdateId: 1
+                orderDescription: Updated description for transport order.
+                nodes:
+                  - nodeId: dock-a
+                    sequenceId: 0
+                    released: true
+                    actions: []
+                    nodePosition:
+                      mapId: map-warehouse-a
+                      x: 1.0
+                      y: 2.0
+                      theta: 0.0
+                  - nodeId: zone-b
+                    sequenceId: 1
+                    released: true
+                    actions: []
+                    nodePosition:
+                      mapId: map-warehouse-a
+                      x: 10.0
+                      y: 20.0
+                      theta: 0.0
+                edges: []
+                status: QUEUED
+                assignedRobotId: Syrius.SOR-Carrier-001
+                createdAt: '2026-07-29T09:00:00Z'
+                siteId: site-warehouse-a
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Order is in a terminal state or archived and cannot be updated.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: 'https://syriusorbit.example/errors/conflict'
+                title: Conflict
+                status: 409
+                detail: Only non-terminal, non-archived orders can be updated.
+                instance: 'https://api.syriusorbit.example/orders/order-2026-0001'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Orders
@@ -3191,6 +3275,40 @@ components:
           type: string
           description: Identifier of the robot assigned to execute the order.
           examples: [Syrius.SOR-Carrier-001]
+
+    OrderUpdateRequest:
+      type: object
+      description: |-
+        Request body for updating an existing order. Follows VDA 5050
+        additive update semantics — new nodes and edges are appended to
+        the existing order content. The server auto-increments
+        `orderUpdateId` on each successful update.
+      properties:
+        orderDescription:
+          type: string
+          description: Updated human-readable description for the order.
+          example: Updated description for transport order.
+        nodes:
+          type: array
+          description: Nodes to append to the existing order.
+          example:
+            - nodeId: zone-b
+              sequenceId: 1
+              released: true
+              actions: []
+              nodePosition:
+                mapId: map-warehouse-a
+                x: 10.0
+                y: 20.0
+                theta: 0.0
+          items:
+            $ref: '#/components/schemas/Node'
+        edges:
+          type: array
+          description: Edges to append to the existing order.
+          example: []
+          items:
+            $ref: '#/components/schemas/Edge'
 
     Node:
       type: object
