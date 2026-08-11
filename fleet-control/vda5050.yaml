@@ -39,16 +39,38 @@ servers:
         default: localhost
       brokerPort:
         default: '1883'
+    bindings:
+      mqtt:
+        cleanSession: false
+        keepAlive: 60
+        bindingVersion: 0.2.0
   mqttBrokerWs:
     host: '{brokerHost}:{wsPort}'
     protocol: mqtt-ws
     protocolVersion: 3.1.1
-    description: MQTT over WebSocket endpoint for browser clients. Browser clients subscribe to VDA5050 topics to receive real-time messages without polling.
+    description: |
+      MQTT over WebSocket endpoint for browser clients.
+
+      Browser clients subscribe to specific VDA5050 topics per robot to receive
+      real-time messages without polling. They subscribe to `state`,
+      `visualization`, and `connection` topics only — they **do not** subscribe
+      to `order`, `instantActions`, `zoneSet`, or `responses`.
+
+      Subscription pattern:
+      `{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/{messageType}`
+
+      Browser clients publish no commands; all commands are issued through the
+      Fleet Management API (HTTP).
     variables:
       brokerHost:
         default: localhost
       wsPort:
         default: '8083'
+    bindings:
+      mqtt:
+        cleanSession: true
+        keepAlive: 60
+        bindingVersion: 0.2.0
 channels:
   order:
     address: '{interfaceName}/{majorVersion}/{manufacturer}/{serialNumber}/order'
@@ -183,6 +205,10 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/state'
+    bindings:
+      mqtt:
+        qos: 0
+        bindingVersion: 0.2.0
     summary: Fleet control receives state messages from the mobile robot.
     description: Fleet control receives VDA5050 state reports from the mobile robot.
     messages:
@@ -192,6 +218,10 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/visualization'
+    bindings:
+      mqtt:
+        qos: 0
+        bindingVersion: 0.2.0
     summary: Fleet control receives optional visualization updates.
     description: Fleet control receives optional high-frequency visualization updates from the mobile robot.
     messages:
@@ -201,8 +231,14 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/connection'
+    bindings:
+      mqtt:
+        qos: 1
+        bindingVersion: 0.2.0
     summary: Fleet control receives mobile robot connection state.
-    description: Fleet control receives mobile robot connection state or broker last-will notifications.
+    description: |
+      Fleet control receives mobile robot connection state or broker last-will notifications.
+      Per VDA5050 §6.5, all messages on this topic **shall** be published with the `retained` flag.
     messages:
       - $ref: '#/channels/connection/messages/connectionMessage'
 
@@ -210,8 +246,14 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/factsheet'
+    bindings:
+      mqtt:
+        qos: 0
+        bindingVersion: 0.2.0
     summary: Fleet control receives factsheet data from the mobile robot.
-    description: Fleet control receives robot capability and limit declarations from the mobile robot.
+    description: |
+      Fleet control receives robot capability and limit declarations from the mobile robot.
+      Per VDA5050, all messages on this topic **shall** be published with the `retained` flag.
     messages:
       - $ref: '#/channels/factsheet/messages/factsheetMessage'
 
@@ -219,6 +261,11 @@ operations:
     action: send
     channel:
       $ref: '#/channels/order'
+    bindings:
+      mqtt:
+        qos: 0
+        retain: false
+        bindingVersion: 0.2.0
     summary: Fleet control sends orders to the mobile robot.
     description: Fleet control sends VDA5050 orders and order updates to the mobile robot.
     messages:
@@ -228,6 +275,11 @@ operations:
     action: send
     channel:
       $ref: '#/channels/instantActions'
+    bindings:
+      mqtt:
+        qos: 0
+        retain: false
+        bindingVersion: 0.2.0
     summary: Fleet control sends instant actions to the mobile robot.
     description: Fleet control sends immediate action commands to the mobile robot.
     messages:
@@ -237,6 +289,11 @@ operations:
     action: send
     channel:
       $ref: '#/channels/zoneSet'
+    bindings:
+      mqtt:
+        qos: 0
+        retain: false
+        bindingVersion: 0.2.0
     summary: Fleet control sends zone sets to the mobile robot.
     description: Fleet control sends zone set transfers to the mobile robot.
     messages:
@@ -246,6 +303,11 @@ operations:
     action: send
     channel:
       $ref: '#/channels/responses'
+    bindings:
+      mqtt:
+        qos: 0
+        retain: false
+        bindingVersion: 0.2.0
     summary: Fleet control responds to robot requests.
     description: Fleet control sends responses for robot request objects.
     messages:
