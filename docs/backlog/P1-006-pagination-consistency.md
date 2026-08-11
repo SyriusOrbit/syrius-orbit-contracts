@@ -2,7 +2,7 @@
 id: P1-006
 title: Inconsistent pagination strategy
 priority: P1
-status: open
+status: done
 area: fleet-management
 effort: low
 depends-on:
@@ -10,31 +10,36 @@ depends-on:
 
 ## Problem
 
-The Fleet Management API applies pagination inconsistently:
-- `GET /robots`: No pagination, returns complete list always
-- `GET /robots?siteId=xxx`: No pagination
-- `GET /sites/{siteId}/robots`: Supports pagination (page, pageSize)
-- `GET /orders`: Supports pagination
-- `GET /robots/{robotId}/instant-actions`: Supports pagination
-- `GET /sites/{siteId}/zonesets/{zoneSetId}/zones`: Supports pagination
-- `GET /sites/{siteId}/maps`: No pagination, returns complete list
-- `GET /sites/{siteId}/zonesets`: No pagination, returns complete list
-- `GET /sites/{siteId}/navigationgraphs`: No pagination, returns complete list
+The Fleet Management API applied pagination inconsistently:
+- `GET /robots`: No pagination
+- `GET /sites/{siteId}/robots`: Supported pagination (page, pageSize)
+- `GET /orders`: Supported pagination
+- `GET /robots/{robotId}/instant-actions`: Supported pagination
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}/zones`: Supported pagination
+- `GET /sites/{siteId}/maps`: No pagination
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets`: No pagination
 
-The inconsistency makes it hard for API consumers to write uniform list-handling code.
+The inconsistency made it hard for API consumers to write uniform list-handling code.
 
 ## Affected Files
 
 - `fleet-management/openapi.yaml`
 
+## Decision
+
+Adopted a **bounded vs unbounded** split strategy:
+
+- **Bounded resources** (Robots, Maps, ZoneSets) — no pagination. Physical fleet size and map count are inherently limited. `GET /sites/{siteId}/robots` had its `page`/`pageSize` parameters removed to align with `GET /robots`.
+- **Unbounded resources** (Orders, InstantActions, Zones) — paginated with unified `page`/`pageSize` parameters. These resources accumulate over time.
+
 ## Definition of Done
 
-- [ ] Decide on a unified pagination strategy: either all list endpoints support pagination, or none do
-- [ ] If pagination is adopted: add page/pageSize parameters to robot list, map list, zone set list, navigation graph list
-- [ ] If no pagination: remove page/pageSize from orders, instant actions, and zone lists
-- [ ] Document the rationale (e.g., "translated views are always small enough to return complete")
-- [ ] Ensure all list response schemas include or exclude `pagination` consistently
+- [x] Decide on a unified pagination strategy: bounded resources no pagination, unbounded resources paginated
+- [x] Remove `page`/`pageSize` from `GET /sites/{siteId}/robots` (bounded resource)
+- [x] Fix `Pagination` example to use zero-based `page: 0` (was `page: 1`)
+- [x] Document the rationale in endpoint descriptions
+- [x] All list response schemas consistently include or exclude `pagination`
 
 ## Notes
 
-The current rationale for not paginating certain endpoints ("always returns the complete list") may be valid for small deployments but creates an arbitrary ceiling. A consistent policy is preferable even if some endpoints practically never need pagination.
+The bounded vs unbounded split is intentional: robots, maps, and zone sets are physically bounded (finite fleet size, finite map count), while orders, instant actions, and zones accumulate over time or are inherently numerous. A one-size-fits-all pagination policy would add unnecessary complexity to bounded-resource endpoints.

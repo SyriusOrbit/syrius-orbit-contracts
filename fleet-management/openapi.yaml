@@ -551,12 +551,10 @@ paths:
       tags:
         - Robots
       summary: List robots for a specific site.
-      description: "List all robots affiliated with the specified site. Equivalent to GET /robots?siteId={siteId}. Does not include orphan robots."
+      description: "List all robots affiliated with the specified site. Equivalent to GET /robots?siteId={siteId}. Does not include orphan robots. Always returns the complete list and does not support pagination."
       operationId: listRobotsAtSite
       parameters:
         - $ref: '#/components/parameters/siteId'
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/pageSize'
       responses:
         '200':
           description: Robot list returned.
@@ -1481,7 +1479,7 @@ components:
       type: object
       description: Pagination metadata for collection responses.
       example:
-        page: 1
+        page: 0
         pageSize: 20
         total: 100
       required:
