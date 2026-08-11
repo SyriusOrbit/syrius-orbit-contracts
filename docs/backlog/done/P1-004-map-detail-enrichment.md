@@ -2,7 +2,7 @@
 id: P1-004
 title: MapDetail identical to MapSummary
 priority: P1
-status: open
+status: done
 area: fleet-management
 effort: low
 depends-on:

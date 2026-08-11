@@ -2,7 +2,7 @@
 id: P1-005
 title: NavigationGraph detail missing context
 priority: P1
-status: open
+status: done
 area: fleet-management
 effort: low
 depends-on:
