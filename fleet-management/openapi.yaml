@@ -15,9 +15,8 @@ info:
     physical or logical site. Site is a filtering dimension (mutable context
     state), not a namespace identifier. Robots may exist as orphans (no site
     affiliation) for pre-registration, migration preparation, and import
-    workflows. Orders and fleet overviews are always site-scoped. Map, zone set,
-    and navigation graph resources are read-only translation views sourced from
-    the Spatial API.
+    workflows. Orders and fleet overviews are always site-scoped. Map resources are read-only translation views sourced from
+    the Spatial API. Graph and zone set data are nested under map resources.
 
     Schema and concept compatibility follows VDA 5050 wherever the same
     business object is represented. VDA 5050 MQTT header fields are not
@@ -47,11 +46,7 @@ tags:
   - name: Orders
     description: VDA 5050-aligned order submission, monitoring, and detail views.
   - name: Maps
-    description: Map resources used for fleet visualization. Read-only translation views from Spatial API.
-  - name: ZoneSets
-    description: Zone set management - read-only translation views from Spatial API.
-  - name: NavigationGraphs
-    description: Navigation graph management - read-only translation views from Spatial API.
+    description: Map resources and their nested graph and zone set data. Read-only translation views from Spatial API.
   - name: InstantActions
     description: Robot-scoped instant action execution and history.
   - name: Fleet
@@ -703,7 +698,6 @@ paths:
                     released: true
                     actions: []
                     nodePosition:
-                      mapId: map-warehouse-a
                       x: 1.0
                       y: 2.0
                       theta: 0.0
@@ -745,7 +739,6 @@ paths:
                   released: true
                   actions: []
                   nodePosition:
-                    mapId: map-warehouse-a
                     x: 10.0
                     y: 20.0
                     theta: 0.0
@@ -766,7 +759,6 @@ paths:
                     released: true
                     actions: []
                     nodePosition:
-                      mapId: map-warehouse-a
                       x: 1.0
                       y: 2.0
                       theta: 0.0
@@ -775,7 +767,6 @@ paths:
                     released: true
                     actions: []
                     nodePosition:
-                      mapId: map-warehouse-a
                       x: 10.0
                       y: 20.0
                       theta: 0.0
@@ -891,7 +882,6 @@ paths:
                   released: true
                   actions: []
                   nodePosition:
-                    mapId: map-warehouse-a
                     x: 1.0
                     y: 2.0
                     theta: 0.0
@@ -920,7 +910,6 @@ paths:
                     released: true
                     actions: []
                     nodePosition:
-                      mapId: map-warehouse-a
                       x: 1.0
                       y: 2.0
                       theta: 0.0
@@ -942,7 +931,7 @@ paths:
         - Maps
       summary: List maps for a site.
       description: Retrieve the full list of maps for the specified site. Read-only translation views from Spatial API. This endpoint always returns the complete list and does not support pagination.
-      operationId: listMapsAtSite
+      operationId: listMaps
       parameters:
         - $ref: '#/components/parameters/siteId'
       responses:
@@ -959,13 +948,44 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+    post:
+      tags:
+        - Maps
+      summary: Create a map.
+      description: |-
+        Create a new map resource for a site. The map can be created empty
+        (no graph or zone set data) or with optional references to Spatial
+        API collections that provide the graph and/or zone set data.
+      operationId: createMap
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapCreateRequest'
+      responses:
+        '201':
+          description: Map created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Map with the same mapId already exists.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /sites/{siteId}/maps/{mapId}:
     get:
       tags:
         - Maps
       summary: Get a map detail.
       description: Retrieve the detail view for a single map resource scoped to a site. Read-only translation view from Spatial API.
-      operationId: getMapAtSite
+      operationId: getMap
       parameters:
         - $ref: '#/components/parameters/siteId'
         - $ref: '#/components/parameters/mapId'
@@ -982,6 +1002,15 @@ paths:
                 mapDescriptor: Warehouse A map
                 mapStatus: ENABLED
                 siteId: site-warehouse-a
+                graph:
+                  graphId: graph-001
+                  nodeCount: 42
+                  edgeCount: 68
+                zoneSets:
+                  - zoneSetId: zoneset-001
+                    zoneSetDescriptor: Warehouse A zone set
+                    zoneCount: 12
+                lastUpdatedAt: '2026-08-11T10:00:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -989,15 +1018,58 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /sites/{siteId}/zonesets:
+  /sites/{siteId}/maps/{mapId}/graph:
     get:
       tags:
-        - ZoneSets
-      summary: List zone sets for a site.
-      description: Retrieve the full list of zone sets for the specified site. Read-only translation views from Spatial API.
-      operationId: listZoneSetsAtSite
+        - Maps
+      summary: Get the navigation graph for a map.
+      description: Retrieve the navigation graph (nodes and edges) for a specific map. Read-only translation view from Spatial API.
+      operationId: getGraph
       parameters:
         - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/mapId'
+      responses:
+        '200':
+          description: Navigation graph returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Graph'
+              example:
+                nodes:
+                  - nodeId: node-001
+                    nodePosition:
+                      x: 0.0
+                      y: 0.0
+                      theta: 0.0
+                  - nodeId: node-002
+                    nodePosition:
+                      x: 10.0
+                      y: 0.0
+                      theta: 0.0
+                edges:
+                  - edgeId: edge-001
+                    startNodeId: node-001
+                    endNodeId: node-002
+                    length: 10.0
+                    maximumSpeed: 1.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /sites/{siteId}/maps/{mapId}/zoneSets:
+    get:
+      tags:
+        - Maps
+      summary: List zone sets for a map.
+      description: Retrieve the list of zone sets associated with a specific map. Read-only translation views from Spatial API.
+      operationId: listZoneSets
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/mapId'
       responses:
         '200':
           description: Zone set list returned.
@@ -1012,15 +1084,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /sites/{siteId}/zonesets/{zoneSetId}:
+  /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}:
     get:
       tags:
-        - ZoneSets
+        - Maps
       summary: Get a zone set detail.
-      description: Retrieve the detail view for a single zone set resource scoped to a site. Read-only translation view from Spatial API.
-      operationId: getZoneSetAtSite
+      description: Retrieve the detail view for a single zone set under a specific map. Read-only translation view from Spatial API.
+      operationId: getZoneSet
       parameters:
         - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/mapId'
         - $ref: '#/components/parameters/zoneSetId'
       responses:
         '200':
@@ -1031,7 +1104,6 @@ paths:
                 $ref: '#/components/schemas/ZoneSetDetail'
               example:
                 zoneSetId: zoneset-001
-                siteId: site-warehouse-a
                 zoneSetDescriptor: Warehouse A zone set
                 zones:
                   - zoneId: zone-001
@@ -1045,6 +1117,8 @@ paths:
                         y: 10.0
                       - x: 0.0
                         y: 10.0
+                    zoneSetId: zoneset-001
+                    zoneSetDescriptor: Warehouse A zone set
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1052,15 +1126,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /sites/{siteId}/zonesets/{zoneSetId}/zones:
+  /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}/zones:
     get:
       tags:
-        - ZoneSets
+        - Maps
       summary: List zones under a zone set.
-      description: Retrieve a paginated, filterable list of zones under a zone set for a specific site. Read-only translation views from Spatial API.
-      operationId: listZonesAtSite
+      description: Retrieve a paginated, filterable list of zones under a zone set for a specific map. Read-only translation views from Spatial API.
+      operationId: listZones
       parameters:
         - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/mapId'
         - $ref: '#/components/parameters/zoneSetId'
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
@@ -1079,15 +1154,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /sites/{siteId}/zonesets/{zoneSetId}/zones/{zoneId}:
+  /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}/zones/{zoneId}:
     get:
       tags:
-        - ZoneSets
+        - Maps
       summary: Get a zone detail.
-      description: Retrieve the detail view for a single zone under a zone set for a specific site. Read-only translation view from Spatial API.
-      operationId: getZoneAtSite
+      description: Retrieve the detail view for a single zone under a zone set for a specific map. Read-only translation view from Spatial API.
+      operationId: getZone
       parameters:
         - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/mapId'
         - $ref: '#/components/parameters/zoneSetId'
         - $ref: '#/components/parameters/zoneId'
       responses:
@@ -1109,73 +1185,8 @@ paths:
                     y: 10.0
                   - x: 0.0
                     y: 10.0
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /sites/{siteId}/navigationgraphs:
-    get:
-      tags:
-        - NavigationGraphs
-      summary: List navigation graphs for a site.
-      description: Retrieve the full list of navigation graphs for the specified site. Read-only translation views from Spatial API.
-      operationId: listNavigationGraphsAtSite
-      parameters:
-        - $ref: '#/components/parameters/siteId'
-      responses:
-        '200':
-          description: Navigation graph list returned.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationGraphList'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /sites/{siteId}/navigationgraphs/{navigationGraphId}:
-    get:
-      tags:
-        - NavigationGraphs
-      summary: Get a navigation graph detail.
-      description: Retrieve the detail view for a single navigation graph resource scoped to a site. Read-only translation view from Spatial API.
-      operationId: getNavigationGraphAtSite
-      parameters:
-        - $ref: '#/components/parameters/siteId'
-        - $ref: '#/components/parameters/navigationGraphId'
-      responses:
-        '200':
-          description: Navigation graph detail returned.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationGraph'
-              example:
-                nodes:
-                  - nodeId: node-001
-                    nodePosition:
-                      x: 0.0
-                      y: 0.0
-                      theta: 0.0
-                      mapId: map-001
-                  - nodeId: node-002
-                    nodePosition:
-                      x: 10.0
-                      y: 0.0
-                      theta: 0.0
-                      mapId: map-001
-                edges:
-                  - edgeId: edge-001
-                    startNodeId: node-001
-                    endNodeId: node-002
-                    length: 10.0
-                    maximumSpeed: 1.5
+                zoneSetId: zoneset-001
+                zoneSetDescriptor: Warehouse A zone set
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1242,14 +1253,7 @@ components:
       name: zoneSetId
       in: path
       required: true
-      description: Unique zone set identifier.
-      schema:
-        type: string
-    navigationGraphId:
-      name: navigationGraphId
-      in: path
-      required: true
-      description: Unique navigation graph identifier.
+      description: Unique zone set identifier within a map.
       schema:
         type: string
     robotId:
@@ -3297,7 +3301,6 @@ components:
               released: true
               actions: []
               nodePosition:
-                mapId: map-warehouse-a
                 x: 10.0
                 y: 20.0
                 theta: 0.0
@@ -3418,7 +3421,6 @@ components:
       required:
         - x
         - y
-        - mapId
       properties:
         x:
           type: number
@@ -3463,9 +3465,6 @@ components:
           minimum: 0
           maximum: 3.141592654
           description: Allowed deviation of the theta angle in radians.
-        mapId:
-          type: string
-          description: Unique identification of the map in which the position is referenced.
 
     Action:
       type: object
@@ -3754,37 +3753,79 @@ components:
           type: string
           description: Site identifier.
 
-    MapDetail:
+    MapCreateRequest:
       type: object
-      description: |-
-        Detail view for a map, reusing VDA 5050-compatible identifiers and
-        status fields where they describe the same map concept.
+      description: Request body for creating a new map.
       required:
         - mapId
         - mapVersion
-        - mapStatus
-        - siteId
       properties:
         mapId:
           type: string
-          description: VDA 5050 map identifier.
-          example: map-001
+          description: Unique map identifier.
         mapVersion:
           type: string
-          description: VDA 5050 map version.
-          example: '1.0'
+          description: Map version.
         mapDescriptor:
           type: string
-          description: VDA 5050 map descriptor, a user-defined, human-readable name.
-          example: Warehouse A map
+          description: User-defined, human-readable name or descriptor.
         mapStatus:
           $ref: '#/components/schemas/MapStatus'
-        siteId:
+        graphSource:
           type: string
-          description: Site identifier.
-          example: site-warehouse-a
+          description: Optional reference to a Spatial API collection for the navigation graph data.
+        zoneSetSource:
+          type: string
+          description: Optional reference to a Spatial API collection for the zone set data.
 
-    NavigationGraph:
+    MapDetail:
+      description: |-
+        Detail view for a map, extending MapSummary with graph and zone set
+        summaries and last-updated timestamp.
+      allOf:
+        - $ref: '#/components/schemas/MapSummary'
+        - type: object
+          properties:
+            graph:
+              type: object
+              description: Summary of the associated navigation graph.
+              properties:
+                graphId:
+                  type: string
+                  description: Unique navigation graph identifier.
+                nodeCount:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Number of nodes in the navigation graph.
+                edgeCount:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Number of edges in the navigation graph.
+            zoneSets:
+              type: array
+              description: Zone sets associated with this map.
+              items:
+                type: object
+                properties:
+                  zoneSetId:
+                    type: string
+                    description: Unique identifier of the zone set.
+                  zoneSetDescriptor:
+                    type: string
+                    description: Human-readable name or descriptor.
+                  zoneCount:
+                    type: integer
+                    format: int64
+                    minimum: 0
+                    description: Number of zones in the zone set.
+            lastUpdatedAt:
+              type: string
+              format: date-time
+              description: Time the map was last updated.
+
+    Graph:
       type: object
       description: |-
         Navigation graph part of a map, sourced from the Spatial API. Node
@@ -3798,7 +3839,7 @@ components:
           description: Graph nodes, aligned with VDA 5050 node terminology.
           example: []
           items:
-            $ref: '#/components/schemas/NavigationGraphNode'
+            $ref: '#/components/schemas/GraphNode'
         edges:
           type: array
           description: Graph edges, aligned with VDA 5050 edge terminology.
@@ -3807,9 +3848,9 @@ components:
               startNodeId: node-001
               endNodeId: node-002
           items:
-            $ref: '#/components/schemas/NavigationGraphEdge'
+            $ref: '#/components/schemas/GraphEdge'
 
-    NavigationGraphNode:
+    GraphNode:
       type: object
       description: A node within a navigation graph.
       required:
@@ -3823,7 +3864,7 @@ components:
         nodePosition:
           $ref: '#/components/schemas/NodePosition'
 
-    NavigationGraphEdge:
+    GraphEdge:
       type: object
       description: A directed edge within a navigation graph.
       required:
@@ -3861,82 +3902,28 @@ components:
           format: double
           description: Permitted maximum speed on the edge in meters per second.
 
-    NavigationGraphSummary:
+    ZoneSetDetail:
       type: object
-      description: Summary of a navigation graph for site-scoped listing.
-      required:
-        - navigationGraphId
-        - siteId
-      properties:
-        navigationGraphId:
-          type: string
-          description: Unique navigation graph identifier.
-        siteId:
-          type: string
-          description: Site identifier.
-        navigationGraphDescriptor:
-          type: string
-          description: Human-readable name or descriptor.
-        nodeCount:
-          type: integer
-          format: int64
-          minimum: 0
-          description: Number of nodes in the navigation graph.
-        edgeCount:
-          type: integer
-          format: int64
-          minimum: 0
-          description: Number of edges in the navigation graph.
-
-    NavigationGraphList:
-      type: object
-      description: A list of navigation graphs.
-      required:
-        - navigationGraphs
-      properties:
-        navigationGraphs:
-          type: array
-          example: []
-          items:
-            $ref: '#/components/schemas/NavigationGraphSummary'
-
-    ZoneSetSummary:
-      type: object
-      description: Summary of a zone set for site-scoped listing from Spatial API.
+      description: Full detail of a zone set, including its zones.
       required:
         - zoneSetId
-        - siteId
+        - zones
       properties:
         zoneSetId:
           type: string
           description: Unique identifier of the zone set.
-        siteId:
-          type: string
-          description: Site identifier.
         zoneSetDescriptor:
           type: string
           description: Human-readable name or descriptor.
-        zoneCount:
-          type: integer
-          format: int64
-          minimum: 0
-          description: Number of zones in the zone set.
-
-    ZoneSetDetail:
-      description: Full detail of a zone set, including its zones.
-      allOf:
-        - $ref: '#/components/schemas/ZoneSetSummary'
-        - type: object
-          properties:
-            zones:
-              type: array
-              description: Zones under this zone set.
-              items:
-                $ref: '#/components/schemas/Zone'
+        zones:
+          type: array
+          description: Zones under this zone set.
+          items:
+            $ref: '#/components/schemas/Zone'
 
     ZoneSetList:
       type: object
-      description: A list of zone sets.
+      description: A list of zone sets for a map.
       required:
         - zoneSets
       properties:
@@ -3944,7 +3931,19 @@ components:
           type: array
           example: []
           items:
-            $ref: '#/components/schemas/ZoneSetSummary'
+            type: object
+            properties:
+              zoneSetId:
+                type: string
+                description: Unique identifier of the zone set.
+              zoneSetDescriptor:
+                type: string
+                description: Human-readable name or descriptor.
+              zoneCount:
+                type: integer
+                format: int64
+                minimum: 0
+                description: Number of zones in the zone set.
 
     ZoneList:
       type: object

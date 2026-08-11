@@ -19,15 +19,15 @@ The core resources are:
 - `order`
 - `map`
 - `zoneSet`
-- `navigationGraph`
+- `graph`
 - `instantAction`
 
 Resource scope:
 
 - `robot` represents the mobile robot in VDA5050 terminology.
 - `order` follows VDA5050 order semantics. This API defines the management-side creation and read views for orders, while execution and state propagation are handled through Fleet Control.
-- `map`, `zoneSet`, and `navigationGraph` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. They are independent top-level resources.
-- `zone` belongs to `zoneSet`, not to `map`.
+- `map`, `zoneSet`, and `graph` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. `graph` and `zoneSet` are nested under `map` resources.
+- `zone` belongs to `zoneSet`, which belongs to `map`.
 - `instantAction` is the command surface for predefined actions such as `cancelOrder` and `factsheetRequest`, matching the VDA5050 instant action concept.
 - `factsheet` is communicated by the mobile robot after a `factsheetRequest` instant action and is not modeled as a standalone primary resource.
 - Errors and warnings are represented as part of mobile robot state and information, not as a separate alert resource.
@@ -44,9 +44,9 @@ The API should support:
 - Creating orders (site-bound, via site path)
 - Retrieving fleet overview data (per site)
 - Querying maps (per site, read-only translation)
-- Querying zone sets (per site, read-only translation)
-- Querying zones (under a zone set)
-- Querying navigation graphs (per site, read-only translation)
+- Querying zone sets (under a map)
+- Querying zones (under a zone set, under a map)
+- Querying graph (under a map)
 - Triggering predefined instant actions such as `cancelOrder` and `factsheetRequest`
 
 ## Non-Goals
@@ -63,7 +63,7 @@ The following areas are out of scope for this API:
 
 - Operational data (robot state, order status) should be near real time.
 - A delay of a few seconds is acceptable.
-- Translation views (map, zoneSet, navigationGraph) are translated in real time from the Spatial API on each read request.
+- Translation views (map, zoneSet, graph) are translated in real time from the Spatial API on each read request.
 - Real-time behavior is handled by the Fleet Control API via MQTT (native or over WebSocket). Browser clients connect directly to the MQTT broker using MQTT over WebSocket to receive real-time VDA5050 messages.
 
 ## Schema Compatibility Principles
@@ -96,7 +96,7 @@ Fleet Management is a cross-site deployment. Site is a **filtering dimension** (
 |---|---|---|---|
 | Movable resources | `robot`, `instantAction` | Site ID is mutable state | Yes (robot only) |
 | Strong-bound resources | `order` | Site ID required at creation, immutable | No |
-| Translation views | `map`, `zoneSet`, `navigationGraph` | Site ID always present (from Spatial collection) | No |
+| Translation views | `map`, `zoneSet`, `graph` | Site ID always present (from Spatial collection) | No |
 
 ### Read vs Write Interface Patterns
 
@@ -123,12 +123,12 @@ Operations that require site binding are enforced at API level (rejected on crea
 
 ### Translation Resources
 
-`map`, `zoneSet`, and `navigationGraph` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. They are independent top-level resources, not sub-resources of each other:
+`map` is a logical container that groups graph and zone set data. `graph` and `zoneSet` are read-only translation views sourced from the Spatial API (OGC collections), translated in real time to VDA5050-compatible schemas. They are nested under `map`:
 
-- Each maps to a distinct Spatial collection under the same site
-- `zoneSet` and `navigationGraph` are peer resources alongside `map`, not nested under `map`
+- `map` is a lightweight metadata record (identifiers, status, version)
+- `graph` and `zoneSet` each map to a distinct Spatial collection under the same site
 - Fleet Management stores only lightweight metadata (source collection mapping), not content
-- `zone` belongs to `zoneSet`, not to `map`
+- `zone` belongs to `zoneSet`, which belongs to `map`
 
 ### Site Management
 
@@ -289,13 +289,13 @@ The `headerId` is not exposed (RESTful design pattern), and `timestamp` is mappe
 
 Data update mechanism (cache refresh, factsheetRequest trigger) is an implementation detail not specified at the API level.
 
-### Navigation Graph
+### Graph
 
-Navigation graph data is sourced from the **Spatial API** (OGC API Features) as a read-only translation view, not from VDA5050 order/state aggregation. It is a peer resource alongside `map` and `zoneSet`, not a sub-resource of `map`.
+Graph data is sourced from the **Spatial API** (OGC API Features) as a read-only translation view, not from VDA5050 order/state aggregation. It is a sub-resource of `map`, accessible via `/sites/{siteId}/maps/{mapId}/graph`.
 
 Node and edge fields stay aligned with VDA5050 order and state terminology where the same geometry concept is represented. Shared field names (such as `nodeId`, `edgeId`, `nodeDescriptor`, `orientation`, `orientationType`, `length`, `maximumSpeed`) match VDA 5050 exactly. However, VDA 5050 order-only dynamic fields (`sequenceId`, `released`) are omitted because they describe execution state, not static graph topology. Conversely, graph-structure fields (`startNodeId`, `endNodeId`) are added because they are required to express edge connectivity in a static navigation graph.
 
-Navigation graph, `map`, and `zoneSet` are three independent translation resources, each mapping to a distinct Spatial collection. They share the same `siteId` context but are not nested under each other.
+`graph`, `map`, and `zoneSet` share the same `siteId` context. `graph` is nested under `map`.
 
 ### Zone Type Enumeration
 
@@ -337,7 +337,7 @@ The `Zone` schema in the Fleet Management API includes the following fields. Zon
 
 The `zoneSetId` and `zoneSetDescriptor` fields provide context from the VDA5050 zoneSet wrapper object, which groups related zones together. This allows operators to understand which zone set a zone belongs to without requiring an additional API call.
 
-Zone set is a peer translation resource alongside `map` and `navigationGraph`, sourcing from a distinct Spatial collection. A site may have multiple zone sets.
+Zone set is a sub-resource of `map`, accessible via `/sites/{siteId}/maps/{mapId}/zoneSets`. A map may have multiple zone sets.
 
 ### Action Status Enumeration
 
@@ -400,19 +400,13 @@ This is a rough path design based on the current requirements. It is intentional
 ### Map-related paths (translation views, read-only)
 
 - `GET /sites/{siteId}/maps` - list maps for a site
+- `POST /sites/{siteId}/maps` - create a map (optional graph/zoneSet source references)
 - `GET /sites/{siteId}/maps/{mapId}` - get map detail
-
-### Zone set-related paths (translation views, read-only)
-
-- `GET /sites/{siteId}/zonesets` - list zone sets for a site
-- `GET /sites/{siteId}/zonesets/{zoneSetId}` - get zone set detail
-- `GET /sites/{siteId}/zonesets/{zoneSetId}/zones` - list zones under a zone set
-- `GET /sites/{siteId}/zonesets/{zoneSetId}/zones/{zoneId}` - get zone detail
-
-### Navigation graph-related paths (translation views, read-only)
-
-- `GET /sites/{siteId}/navigationgraphs` - list navigation graphs for a site
-- `GET /sites/{siteId}/navigationgraphs/{navigationGraphId}` - get navigation graph detail
+- `GET /sites/{siteId}/maps/{mapId}/graph` - get the navigation graph for a map
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets` - list zone sets for a map
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}` - get zone set detail
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}/zones` - list zones under a zone set
+- `GET /sites/{siteId}/maps/{mapId}/zoneSets/{zoneSetId}/zones/{zoneId}` - get zone detail
 
 ### Fleet overview paths
 
@@ -422,8 +416,8 @@ This is a rough path design based on the current requirements. It is intentional
 
 - `factsheet` is modeled as a robot-related view, not as a standalone primary resource.
 - `factsheet` follows VDA5050 factsheet communication semantics and is exposed here as a management view only.
-- `map`, `zoneSet`, and `navigationGraph` are peer translation resources, each mapping to a distinct Spatial collection.
-- `zone` belongs to `zoneSet`, not to `map`.
+- `graph` and `zoneSet` are nested under `map` resources.
+- `zone` belongs to `zoneSet`, which belongs to `map`.
 - `instantAction` is robot-scoped and triggered via `POST /robots/{robotId}/instant-actions`. Gate rules apply at creation time.
 - `orders` are created via site-scoped paths and managed in this API using VDA5050-aligned order concepts. Execution and robot-side lifecycle remain in Fleet Control.
 - Robot `siteId` is mutable via `PATCH /robots/{robotId}`; consistency with physical position should be maintained.
