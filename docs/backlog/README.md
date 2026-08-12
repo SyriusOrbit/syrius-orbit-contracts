@@ -75,7 +75,6 @@ Additional context, references, or constraints.
 | ID | Title | Area | Status |
 |----|-------|------|--------|
 | [P2-010](./P2-010-spatial-fleet-mapping.md) | Missing Spatial-to-Fleet translation mapping | cross | open |
-| [P2-011](./P2-011-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | open |
 
 
 ### Completed
@@ -90,4 +89,5 @@ Additional context, references, or constraints.
 | [P1-007](./done/P1-007-map-detail-enrichment.md) | MapDetail identical to MapSummary | fleet-management | 2026-08-11 |
 | [P1-008](./done/P1-008-navigation-graph-context.md) | NavigationGraph detail missing context | fleet-management | 2026-08-11 |
 | [P1-009](./done/P1-009-pagination-consistency.md) | Inconsistent pagination strategy | fleet-management | 2026-08-11 |
+| [P2-011](./done/P2-011-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | 2026-08-12 |
 | [P2-012](./done/P2-012-mqtt-qos.md) | MQTT QoS and subscription not specified | fleet-control | 2026-08-11 |

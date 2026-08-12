@@ -1215,8 +1215,15 @@ paths:
                     siteId: site-warehouse-a
                     robotCount: 12
                     onlineRobotCount: 10
+                    offlineRobotCount: 2
+                    batteryLowRobotCount: 1
+                    chargingRobotCount: 3
+                    averageBatteryLevel: 72.5
+                    errorRobotCount: 0
                     activeOrderCount: 7
                     queuedOrderCount: 5
+                    completedOrderCount: 23
+                    failedOrderCount: 1
                     updatedAt: '2026-07-29T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -4176,3 +4183,46 @@ components:
           type: string
           description: Site identifier.
           examples: [site-warehouse-a]
+        offlineRobotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of robots currently offline.
+          examples: [2]
+        batteryLowRobotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of robots with battery level below the low threshold.
+          examples: [1]
+        chargingRobotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of robots currently charging.
+          examples: [3]
+        averageBatteryLevel:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Average battery level across all robots (percentage).
+          examples: [72.5]
+        errorRobotCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of robots in an error state.
+          examples: [0]
+        completedOrderCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of orders completed today.
+          examples: [23]
+        failedOrderCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of orders that failed today.
+          examples: [1]
