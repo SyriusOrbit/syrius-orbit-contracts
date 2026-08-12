@@ -74,8 +74,8 @@ Additional context, references, or constraints.
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
-| [P2-001](./P2-001-spatial-fleet-mapping.md) | Missing Spatial-to-Fleet translation mapping | cross | open |
-| [P2-003](./P2-003-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | open |
+| [P2-010](./P2-010-spatial-fleet-mapping.md) | Missing Spatial-to-Fleet translation mapping | cross | open |
+| [P2-011](./P2-011-fleet-overview-metrics.md) | Fleet Overview has limited metrics | fleet-management | open |
 
 
 ### Completed
@@ -83,10 +83,10 @@ Additional context, references, or constraints.
 | ID | Title | Area | Completed At |
 |----|-------|------|-------------|
 | [P0-001](./done/P0-001-mris-incompleteness.md) | MRIS interface incomplete | fleet-control | 2026-08-06 |
-| [P1-001](./done/P1-001-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | 2026-08-06 |
-| [P1-002](./done/P1-002-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | 2026-08-06 |
-| [P1-003](./done/P1-003-order-update-path.md) | Order update HTTP path missing | fleet-management | 2026-08-07 |
-| [P1-004](./done/P1-004-map-detail-enrichment.md) | MapDetail identical to MapSummary | fleet-management | 2026-08-11 |
-| [P1-005](./done/P1-005-navigation-graph-context.md) | NavigationGraph detail missing context | fleet-management | 2026-08-11 |
-| [P1-006](./done/P1-006-pagination-consistency.md) | Inconsistent pagination strategy | fleet-management | 2026-08-11 |
-| [P2-004](./done/P2-004-mqtt-qos.md) | MQTT QoS and subscription not specified | fleet-control | 2026-08-11 |
+| [P1-004](./done/P1-004-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | 2026-08-06 |
+| [P1-005](./done/P1-005-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | 2026-08-06 |
+| [P1-006](./done/P1-006-order-update-path.md) | Order update HTTP path missing | fleet-management | 2026-08-07 |
+| [P1-007](./done/P1-007-map-detail-enrichment.md) | MapDetail identical to MapSummary | fleet-management | 2026-08-11 |
+| [P1-008](./done/P1-008-navigation-graph-context.md) | NavigationGraph detail missing context | fleet-management | 2026-08-11 |
+| [P1-009](./done/P1-009-pagination-consistency.md) | Inconsistent pagination strategy | fleet-management | 2026-08-11 |
+| [P2-012](./done/P2-012-mqtt-qos.md) | MQTT QoS and subscription not specified | fleet-control | 2026-08-11 |
