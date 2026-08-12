@@ -15,7 +15,13 @@ info:
     url: https://opensource.org/licenses/MIT
 servers:
   - url: /
-security: []
+    description: |-
+      API endpoint, deployable on edge or cloud.
+      - Edge deployment: accessed by embedded devices only, no TLS required (intranet environment).
+      - Cloud deployment: accessed by browsers and embedded devices, requires TLS 1.3 + mTLS + OAuth2 JWT.
+security:
+  - bearerAuth: []
+  - mtls: []
 tags:
   - name: Server
     description: API discovery and conformance endpoints.
@@ -71,6 +77,21 @@ paths:
   /sites/{siteId}/tsp:
     $ref: './modules/tsp.paths.yaml#/paths/~1sites~1{siteId}~1tsp'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |-
+        OAuth2 JWT access token. Clients must include the Bearer token
+        in the Authorization header. The token is issued by the
+        authorization server and carries identity and scope claims.
+    mtls:
+      type: mutualTLS
+      description: |-
+        Mutual TLS (mTLS). Clients must present a valid client certificate
+        to establish transport-layer mutual trust. Used for cloud service
+        ingress.
   parameters:
     siteId:
       $ref: './shared/parameters.yaml#/components/parameters/siteId'

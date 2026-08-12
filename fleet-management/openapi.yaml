@@ -35,11 +35,12 @@ info:
 servers:
   - url: /
     description: |-
-      Single server entry point. The local edge Daemon and the cloud services
-      expose fully consistent interfaces. Transport security differences
-      (edge: no TLS, cloud: TLS 1.3 + mTLS + OAuth2 JWT) are handled by the
-      runtime, not by this contract.
-security: []
+      API endpoint, deployable on edge or cloud.
+      - Edge deployment: accessed by embedded devices only, no TLS required (intranet environment).
+      - Cloud deployment: accessed by browsers and embedded devices, requires TLS 1.3 + mTLS + OAuth2 JWT.
+security:
+  - bearerAuth: []
+  - mtls: []
 tags:
   - name: Robots
     description: Fleet robot inventory, live summaries, factsheet, and instant action control.
@@ -230,15 +231,15 @@ paths:
       summary: Update a robot's mutable fields including siteId, suspended, and archived.
       description: |-
         Update a robot's mutable fields. The siteId field can be changed
-        to bind an orphan (null→siteId), migrate between sites
-        (siteId→siteId), or voluntarily unbind (siteId→null). Robot must
+        to bind an orphan (null->siteId), migrate between sites
+        (siteId->siteId), or voluntarily unbind (siteId->null). Robot must
         be idle (no executing order or instant action) to change siteId.
 
         Set `suspended: true` to temporarily exclude the robot from new
         order assignment while continuing to receive MQTT state messages.
 
         Set `archived: true` to hide the robot from default listings.
-        Archive is irreversible via API — unarchive is not supported.
+        Archive is irreversible via API -- unarchive is not supported.
       operationId: updateRobot
       parameters:
         - $ref: '#/components/parameters/robotId'
@@ -1225,6 +1226,21 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |-
+        OAuth2 JWT access token. Clients must include the Bearer token
+        in the Authorization header. The token is issued by the
+        authorization server and carries identity and scope claims.
+    mtls:
+      type: mutualTLS
+      description: |-
+        Mutual TLS (mTLS). Clients must present a valid client certificate
+        to establish transport-layer mutual trust. Used for cloud service
+        ingress.
   parameters:
     siteId:
       name: siteId
@@ -1657,7 +1673,7 @@ components:
           description: |-
             When true, the robot is hidden from default listings
             but remains queryable. Archive is irreversible via API
-            — unarchive is not supported. Filterable via
+            -- unarchive is not supported. Filterable via
             `?archived=true`. Set via PATCH.
           example: false
 
@@ -1864,7 +1880,7 @@ components:
           description: |-
             When true, the robot is hidden from default listings
             but remains queryable. Archive is irreversible via API
-            — unarchive is not supported.
+            -- unarchive is not supported.
           example: false
 
     MobileRobotPosition:
@@ -3238,7 +3254,7 @@ components:
             When true, the order is hidden from default listings but
             remains queryable. Only orders in terminal states
             (SUCCEEDED, FAILED, CANCELED) can be archived. Archive
-            is irreversible via API — unarchive is not supported.
+            is irreversible via API -- unarchive is not supported.
             Filterable via `?archived=true`. Set via
             `POST /orders/{orderId}/archive`.
           example: false
@@ -3282,7 +3298,7 @@ components:
       type: object
       description: |-
         Request body for updating an existing order. Follows VDA 5050
-        additive update semantics — new nodes and edges are appended to
+        additive update semantics -- new nodes and edges are appended to
         the existing order content. The server auto-increments
         `orderUpdateId` on each successful update.
       properties:
@@ -3713,7 +3729,7 @@ components:
             When true, the instant action is hidden from default
             listings but remains queryable. Only instant actions in
             terminal states (FINISHED, FAILED) can be archived. Archive
-            is irreversible via API — unarchive is not supported.
+            is irreversible via API -- unarchive is not supported.
             Filterable via `?archived=true`. Set via PATCH.
           example: false
 
