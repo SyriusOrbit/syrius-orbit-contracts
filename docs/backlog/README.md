@@ -62,13 +62,13 @@ Additional context, references, or constraints.
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
-| [P0-002](./P0-002-security-schemes.md) | Missing security scheme definitions | cross | open |
 | [P0-003](./P0-003-moving-features.md) | OGC Moving Features API missing | spatial | open |
 
 ### P1 — Important
 
 | ID | Title | Area | Status |
 |----|-------|------|--------|
+| [P1-010](./P1-010-mqtt-auth-notes.md) | MQTT broker authentication notes missing | fleet-control | open |
 
 ### P2 — Minor
 
@@ -83,6 +83,7 @@ Additional context, references, or constraints.
 | ID | Title | Area | Completed At |
 |----|-------|------|-------------|
 | [P0-001](./done/P0-001-mris-incompleteness.md) | MRIS interface incomplete | fleet-control | 2026-08-06 |
+| [P0-002](./done/P0-002-security-schemes.md) | Missing security scheme definitions | cross | 2026-08-12 |
 | [P1-004](./done/P1-004-openapi-version-mismatch.md) | OpenAPI version inconsistency | cross | 2026-08-06 |
 | [P1-005](./done/P1-005-lifecycle-delete.md) | Missing DELETE lifecycle operations | fleet-management | 2026-08-06 |
 | [P1-006](./done/P1-006-order-update-path.md) | Order update HTTP path missing | fleet-management | 2026-08-07 |
